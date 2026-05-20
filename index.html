@@ -43,11 +43,20 @@
             -webkit-tap-highlight-color: transparent;
             font-family: 'Poppins', sans-serif;
             background-color: #f8fafc;
+            height: 100vh; /* Fallback */
+            height: 100dvh;
+            /* Prevenir zoom de doble toque (Android/iOS) */
+            touch-action: pan-x pan-y;
         }
         
         .dark body {
             background-color: #0f172a;
             color: #f8fafc;
+        }
+
+        /* Prevenir zoom de interacciones */
+        button, a, input, select, textarea {
+            touch-action: manipulation;
         }
 
         /* Glassmorphism */
@@ -82,14 +91,9 @@
         }
         .modal-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        /* Prevención Auto-zoom iOS */
+        /* Prevención Auto-zoom iOS definitivo */
         @media screen and (max-width: 768px) {
             input, select, textarea { font-size: 16px !important; }
-        }
-
-        body {
-            height: 100vh; /* Fallback */
-            height: 100dvh;
         }
 
         /* Scrollbar custom */
@@ -132,7 +136,7 @@
             <div class="glass p-6 rounded-3xl bg-gradient-to-br from-primary to-blue-700 text-white shadow-xl shadow-primary/20 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
                 <p class="text-blue-100 text-sm font-medium mb-1">Total Deuda Actual</p>
-                <h2 class="text-4xl font-bold mb-4" id="dash-total-debt">$0</h2>
+                <h2 class="text-4xl font-bold mb-4" id="dash-total-debt">Cargando...</h2>
                 
                 <div class="bg-black/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
                     <p class="text-xs text-blue-100 mb-1"><i class="fa-solid fa-bullseye mr-1"></i> Próximo Objetivo (Bola de Nieve)</p>
@@ -245,14 +249,15 @@
             <h2 class="text-2xl font-bold">Ajustes y Datos</h2>
             
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
-                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i> Reportes</h3>
-                <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-download"></i> Descargar Resumen en PDF
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-cloud text-blue-500 mr-2"></i> Estado de la Nube</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos están siendo sincronizados automáticamente con Firebase de forma segura.</p>
+                <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i> Descargar Resumen en PDF
                 </button>
             </div>
 
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
-                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-database text-blue-500 mr-2"></i> Copia de Seguridad</h3>
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-database text-green-500 mr-2"></i> Copia Local</h3>
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="App.exportData()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
                         Exportar JSON
@@ -328,7 +333,7 @@
             <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
             <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
                 <h3 class="font-bold text-lg" id="modal-debt-title">Nueva Deuda</h3>
-                <button onclick="App.UI.closeModal('modal-debt')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="App.UI.closeModal('modal-debt')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 overflow-y-auto pb-safe">
                 <form id="form-debt" onsubmit="App.saveDebt(event)" class="space-y-4">
@@ -378,7 +383,7 @@
             <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
             <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
                 <h3 class="font-bold text-lg"><i class="fa-solid fa-hand-holding-dollar text-secondary mr-2"></i> Registrar Pago</h3>
-                <button onclick="App.UI.closeModal('modal-payment')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="App.UI.closeModal('modal-payment')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 pb-safe">
                 <form id="form-payment" onsubmit="App.processPayment(event)" class="space-y-4">
@@ -418,8 +423,8 @@
             <p class="text-sm text-slate-500 mb-4">Esta acción no se puede deshacer. Escribe <strong class="text-red-500">BORRAR</strong> para confirmar.</p>
             <input type="text" id="wipe-confirm" class="w-full bg-slate-100 dark:bg-slate-800 text-center rounded-xl p-3 mb-4 uppercase font-bold tracking-widest outline-none focus:ring-2 focus:ring-red-500" placeholder="BORRAR">
             <div class="flex gap-3">
-                <button onclick="App.UI.closeModal('modal-wipe')" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-medium active:scale-95">Cancelar</button>
-                <button onclick="App.wipeDataExecute()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95">Eliminar</button>
+                <button type="button" onclick="App.UI.closeModal('modal-wipe')" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-medium active:scale-95">Cancelar</button>
+                <button type="button" onclick="App.wipeDataExecute()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95">Eliminar</button>
             </div>
         </div>
     </div>
@@ -427,7 +432,28 @@
     <!-- Toasts Container -->
     <div id="toast-container" class="fixed top-safe pt-4 left-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none items-center"></div>
 
-    <script>
+    <!-- Firebase & Lógica Principal -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxGO7lmuX3Q14qnzeI3Ge-DjvIKJSmXFU",
+            authDomain: "misfinanzas-86124.firebaseapp.com",
+            projectId: "misfinanzas-86124",
+            storageBucket: "misfinanzas-86124.firebasestorage.app",
+            messagingSenderId: "802563318971",
+            appId: "1:802563318971:web:aa27ecd4540641c297f59e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Variable segura para el ID de la app (requerida para las reglas de Firebase)
+        const globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
         const App = {
             state: {
                 debts: [],
@@ -435,17 +461,44 @@
                 theme: 'light'
             },
             chartInstance: null,
+            userId: null,
+            dbRef: null,
 
             // 1. Inicialización
-            init() {
-                this.loadData();
-                this.applyTheme();
+            async init() {
                 this.updateDate();
                 this.nav('dashboard');
                 
                 // Event Listeners dinámicos
                 document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
                 document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
+
+                // Autenticación (Escucha cambios de estado de usuario)
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.userId = user.uid;
+                        // Regla estricta de rutas de BD (vital para que los permisos funcionen)
+                        this.dbRef = doc(db, 'artifacts', globalAppId, 'users', user.uid, 'userState', 'main');
+                        this.loadData();
+                    }
+                });
+
+                // Intentar autenticar con token inyectado o anónimamente si falla/no existe
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } catch (tokenError) {
+                            console.warn("Token no válido o no coincide, cayendo a auth anónima.", tokenError);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error general de Auth:", error);
+                    this.showToast('Error de conexión a la nube', 'error');
+                }
             },
 
             // 2. Utilidades
@@ -487,20 +540,42 @@
                 }, 3000);
             },
 
-            // 3. Almacenamiento Local
-            saveData() {
-                localStorage.setItem('deudaCeroData', JSON.stringify(this.state));
-                this.renderAll();
-            },
-            loadData() {
-                const data = localStorage.getItem('deudaCeroData');
-                if (data) {
-                    try {
-                        this.state = JSON.parse(data);
-                    } catch (e) {
-                        console.error("Error parsing local storage", e);
-                    }
+            // 3. Almacenamiento en Firebase
+            async saveData() {
+                if (!this.userId || !this.dbRef) return;
+                try {
+                    await setDoc(this.dbRef, this.state);
+                } catch (error) {
+                    console.error("Error guardando datos:", error);
+                    this.showToast("Error al guardar en la nube", "error");
                 }
+            },
+            
+            loadData() {
+                if (!this.userId || !this.dbRef) return;
+                
+                // Listener en tiempo real de Firestore
+                onSnapshot(this.dbRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        this.state = docSnap.data();
+                        
+                        // Validar estructura base por seguridad
+                        if(!this.state.debts) this.state.debts = [];
+                        if(!this.state.history) this.state.history = [];
+                        if(!this.state.theme) this.state.theme = 'light';
+                        
+                        this.applyTheme();
+                        this.renderAll();
+                    } else {
+                        // Es usuario nuevo, inicializar documento
+                        this.saveData();
+                        this.applyTheme();
+                        this.renderAll();
+                    }
+                }, (error) => {
+                    console.error("Firebase listen error: ", error);
+                    this.showToast('Error sincronizando datos', 'error');
+                });
             },
             
             // 4. Navegación y UI
@@ -544,8 +619,8 @@
                     const modal = document.getElementById(id);
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
-                    if (id === 'modal-debt') App.resetDebtForm();
-                    if (id === 'modal-payment') App.populatePaymentSelect();
+                    if (id === 'modal-debt') window.App.resetDebtForm();
+                    if (id === 'modal-payment') window.App.populatePaymentSelect();
                 },
                 closeModal(id) {
                     const modal = document.getElementById(id);
@@ -580,7 +655,7 @@
                 if (activeDebts.length > 0) {
                     const target = activeDebts[0];
                     document.getElementById('dash-next-target').textContent = target.name;
-                    // Progreso (calculado en base al saldo inicial vs actual. Si no hay inicial, asumimos el actual como máximo temporal)
+                    // Progreso
                     const initial = target.initialBalance || target.balance;
                     const progress = initial > 0 ? ((initial - target.balance) / initial) * 100 : 0;
                     document.getElementById('dash-target-progress').style.width = `${Math.min(100, Math.max(0, progress))}%`;
@@ -605,7 +680,7 @@
                 }
                 
                 empty.classList.add('hidden');
-                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve: menor a mayor
+                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve
 
                 list.innerHTML = activeDebts.map((d, index) => {
                     const isTarget = index === 0;
@@ -649,7 +724,7 @@
                 
                 empty.classList.add('hidden');
                 
-                // Mostrar últimos 30 movimientos, más recientes primero
+                // Mostrar últimos 30 movimientos
                 const recent = [...this.state.history].reverse().slice(0, 30);
                 
                 list.innerHTML = recent.map(h => {
@@ -681,10 +756,6 @@
                 const container = document.getElementById('chart-container');
                 const ctx = document.getElementById('debtChart').getContext('2d');
                 
-                // Generar datos históricos falsos basados en pagos para el gráfico (simplificado para SPA)
-                // En un entorno real, guardaríamos instantáneas mensuales.
-                // Aquí sumaremos el total actual y los pagos hacia atrás para recrear el pasado.
-                
                 let activeDebts = this.state.debts.filter(d => d.balance > 0);
                 if (activeDebts.length === 0 && this.state.history.length === 0) {
                     container.classList.add('hidden');
@@ -697,12 +768,11 @@
                 let dataPoints = [totalCurrent];
                 let labels = ['Actual'];
                 
-                // Reconstruir últimos 5 pagos para el gráfico visual
                 let runningTotal = totalCurrent;
                 const payments = this.state.history.filter(h => h.type === 'payment').reverse().slice(0, 5);
                 
                 payments.forEach((p, i) => {
-                    runningTotal += p.amount; // Hacia atrás en el tiempo, la deuda era mayor
+                    runningTotal += p.amount;
                     dataPoints.unshift(runningTotal);
                     labels.unshift(`-${i+1}`);
                 });
@@ -769,7 +839,7 @@
                     id: id || this.generateId(),
                     name,
                     balance,
-                    initialBalance: balance, // Guardamos el inicial para la barra de progreso
+                    initialBalance: balance,
                     minPayment,
                     hasInterest,
                     interestRate,
@@ -779,7 +849,7 @@
                 if (id) {
                     const idx = this.state.debts.findIndex(d => d.id === id);
                     if (idx > -1) {
-                        debtObj.initialBalance = this.state.debts[idx].initialBalance; // Mantener inicial original
+                        debtObj.initialBalance = this.state.debts[idx].initialBalance;
                         this.state.debts[idx] = debtObj;
                         this.addHistoryRecord('edit', `Editaste deuda: ${name}`, 0);
                     }
@@ -831,7 +901,7 @@
                 
                 document.getElementById('pay-amount').disabled = false;
                 select.innerHTML = active.map(d => `<option value="${d.id}">${d.name} (${this.formatCOP(d.balance)})</option>`).join('');
-                this.estimatePayment(); // Calcular estimado inicial
+                this.estimatePayment();
             },
 
             estimatePayment() {
@@ -848,7 +918,6 @@
                 const amount = parseFloat(amountInput.value);
 
                 if (debt && debt.hasInterest && debt.interestRate > 0) {
-                    // Cálculo estimado: Interés = Saldo * Tasa Mensual
                     const estimatedInterest = debt.balance * (debt.interestRate / 100);
                     let capital = amount - estimatedInterest;
                     if(capital < 0) capital = 0;
@@ -876,14 +945,13 @@
 
                 let actualCapitalPaid = amount;
 
-                // Lógica de interés
                 if (debt.hasInterest && debt.interestRate > 0) {
                     const interest = debt.balance * (debt.interestRate / 100);
                     actualCapitalPaid = amount - interest;
                     
                     if (actualCapitalPaid < 0) {
                         alert('Atención: El pago no cubre los intereses de este mes. Tu deuda crecerá.');
-                        debt.balance += Math.abs(actualCapitalPaid); // La deuda crece
+                        debt.balance += Math.abs(actualCapitalPaid);
                     } else {
                         debt.balance -= actualCapitalPaid;
                     }
@@ -930,7 +998,6 @@
                 const target = active[0];
                 document.getElementById('sim-target-name').textContent = target.name;
 
-                // Lógica lineal muy simplificada para demostrar el impacto
                 const normalPayment = target.minPayment;
                 const boostedPayment = normalPayment + extra;
 
@@ -949,7 +1016,7 @@
                 while (tempBalance > 0 && failsafe < 360) {
                     let interest = target.hasInterest ? tempBalance * (target.interestRate/100) : 0;
                     let cap = normalPayment - interest;
-                    if(cap <= 0) { normalMonths = 999; break; } // Deuda infinita
+                    if(cap <= 0) { normalMonths = 999; break; }
                     tempBalance -= cap;
                     normalMonths++;
                     failsafe++;
@@ -998,7 +1065,7 @@
                         const imported = JSON.parse(e.target.result);
                         if(imported.debts && imported.history) {
                             this.state = imported;
-                            this.saveData();
+                            this.saveData(); 
                             this.showToast('Datos importados correctamente');
                         } else {
                             throw new Error('Formato inválido');
@@ -1008,7 +1075,7 @@
                     }
                 };
                 reader.readAsText(file);
-                event.target.value = ''; // Reset input
+                event.target.value = ''; 
             },
 
             exportPDF() {
@@ -1048,7 +1115,7 @@
                 const confirmTxt = document.getElementById('wipe-confirm').value;
                 if (confirmTxt === 'BORRAR') {
                     this.state = { debts: [], history: [], theme: this.state.theme };
-                    this.saveData();
+                    this.saveData(); 
                     this.UI.closeModal('modal-wipe');
                     document.getElementById('wipe-confirm').value = '';
                     this.showToast('Todos los datos fueron borrados', 'error');
@@ -1066,12 +1133,15 @@
                 this.state.history = [
                     { id: 'h1', date: this.getToday(), type: 'create', desc: 'Datos de prueba cargados', amount: 0 }
                 ];
-                this.saveData();
+                this.saveData(); 
                 this.showToast('Datos de prueba cargados');
             }
         };
 
-        // Iniciar app al cargar
+        // Exportar a window para que los eventos onclick del HTML funcionen.
+        window.App = App;
+
+        // Iniciar la app
         window.addEventListener('DOMContentLoaded', () => {
             App.init();
         });
