@@ -87,6 +87,11 @@
             input, select, textarea { font-size: 16px !important; }
         }
 
+        body {
+            height: 100vh; /* Fallback */
+            height: 100dvh;
+        }
+
         /* Scrollbar custom */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -99,10 +104,10 @@
         input[type=number] { -moz-appearance: textfield; }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col text-slate-800 transition-colors duration-300">
+<body class="w-screen overflow-hidden flex flex-col text-slate-800 transition-colors duration-300">
 
     <!-- Header -->
-    <header class="glass pt-safe px-6 py-4 flex justify-between items-center z-20 sticky top-0 shadow-sm">
+    <header class="glass pt-safe px-6 py-4 flex justify-between items-center z-30 fixed top-0 left-0 w-full shadow-sm">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
                 <i class="fa-solid fa-bolt text-xl"></i>
@@ -119,7 +124,7 @@
     </header>
 
     <!-- Contenedor Principal (Scrollable) -->
-    <main class="flex-1 overflow-y-auto px-4 pt-6 pb-24 md:pb-6 mb-safe-nav w-full max-w-5xl mx-auto" id="main-scroll">
+    <main class="flex-1 overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top)+6rem)] pb-32 w-full max-w-5xl mx-auto" id="main-scroll">
         
         <!-- ================= VISTA: DASHBOARD ================= -->
         <section id="view-dashboard" class="view active space-y-6">
@@ -284,7 +289,7 @@
         
         <!-- Botón Flotante Central -->
         <div class="relative -top-6">
-            <button onclick="App.UI.openModal('modal-payment')" class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-xl shadow-primary/40 border-[4px] border-[#f8fafc] dark:border-[#0f172a] active:scale-90 transition-transform">
+            <button onclick="App.UI.openModal('modal-payment')" class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(59,130,246,0.6)] active:scale-90 transition-transform">
                 <i class="fa-solid fa-dollar-sign text-2xl"></i>
             </button>
         </div>
@@ -319,7 +324,7 @@
 
     <!-- Modal: Nueva/Editar Deuda -->
     <div id="modal-debt" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
-        <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] modal-slide-up sm:animate-none">
+        <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] modal-slide-up sm:animate-none">
             <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
             <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
                 <h3 class="font-bold text-lg" id="modal-debt-title">Nueva Deuda</h3>
