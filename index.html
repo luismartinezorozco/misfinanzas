@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#3b82f6">
+    <title>DeudaCero</title>
+    
+    <!-- Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js & jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .dark body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Safe Areas para móviles */
+        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
+        .pt-safe { padding-top: max(env(safe-area-inset-top), 1rem); }
+        .mb-safe-nav { margin-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+
+        /* Vistas (SPA) */
+        .view { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .view.active { display: block; opacity: 1; animation: fadeIn 0.3s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* Prevención Auto-zoom iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea { font-size: 16px !important; }
+        }
+
+        /* Scrollbar custom */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Ocultar flechas en input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col text-slate-800 transition-colors duration-300">
+
+    <!-- Header -->
+    <header class="glass pt-safe px-6 py-4 flex justify-between items-center z-20 sticky top-0 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+                <i class="fa-solid fa-bolt text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold leading-none">DeudaCero</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400" id="header-date"></p>
+            </div>
+        </div>
+        <button onclick="App.toggleTheme()" class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-300 transition active:scale-95">
+            <i class="fa-solid fa-moon dark:hidden"></i>
+            <i class="fa-solid fa-sun hidden dark:block text-yellow-400"></i>
+        </button>
+    </header>
+
+    <!-- Contenedor Principal (Scrollable) -->
+    <main class="flex-1 overflow-y-auto px-4 pt-6 pb-24 md:pb-6 mb-safe-nav w-full max-w-5xl mx-auto" id="main-scroll">
+        
+        <!-- ================= VISTA: DASHBOARD ================= -->
+        <section id="view-dashboard" class="view active space-y-6">
+            <!-- Tarjeta Principal: Total Deuda -->
+            <div class="glass p-6 rounded-3xl bg-gradient-to-br from-primary to-blue-700 text-white shadow-xl shadow-primary/20 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                <p class="text-blue-100 text-sm font-medium mb-1">Total Deuda Actual</p>
+                <h2 class="text-4xl font-bold mb-4" id="dash-total-debt">$0</h2>
+                
+                <div class="bg-black/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                    <p class="text-xs text-blue-100 mb-1"><i class="fa-solid fa-bullseye mr-1"></i> Próximo Objetivo (Bola de Nieve)</p>
+                    <p class="font-semibold text-lg truncate" id="dash-next-target">Ninguna deuda activa</p>
+                    <div class="w-full bg-black/30 rounded-full h-1.5 mt-2">
+                        <div class="bg-secondary h-1.5 rounded-full" id="dash-target-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Rápidas -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass p-4 rounded-2xl flex items-center gap-4 dark:bg-darkCard">
+                    <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-list-ul"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Deudas Activas</p>
+                        <p class="text-xl font-bold" id="dash-active-count">0</p>
+                    </div>
+                </div>
+                <div class="glass p-4 rounded-2xl flex items-center gap-4 dark:bg-darkCard">
+                    <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 text-green-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Pagado Total</p>
+                        <p class="text-lg font-bold" id="dash-total-paid">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico -->
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard hidden" id="chart-container">
+                <h3 class="font-semibold mb-4 text-slate-700 dark:text-slate-200">Evolución de tu Deuda</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="debtChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Botones de Acción Rápida -->
+            <div class="flex gap-3">
+                <button onclick="App.UI.openModal('modal-debt')" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
+                    <i class="fa-solid fa-plus mr-1"></i> Nueva Deuda
+                </button>
+                <button onclick="App.UI.openModal('modal-payment')" class="flex-1 bg-secondary text-white shadow-lg shadow-secondary/30 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
+                    <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Registrar Pago
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= VISTA: MIS DEUDAS ================= -->
+        <section id="view-debts" class="view space-y-4">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-2xl font-bold">Mis Deudas</h2>
+                <button onclick="App.UI.openModal('modal-debt')" class="text-primary font-medium text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full"><i class="fa-solid fa-plus"></i> Agregar</button>
+            </div>
+            
+            <!-- Lista de deudas inyectada por JS -->
+            <div id="debts-list" class="space-y-4"></div>
+            
+            <div id="debts-empty" class="hidden text-center py-12 px-4 glass rounded-3xl dark:bg-darkCard">
+                <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-3xl">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <h3 class="font-bold text-lg mb-2">Sin deudas registradas</h3>
+                <p class="text-sm text-slate-500 mb-6">Empieza agregando tu primera deuda para crear tu plan de salida.</p>
+                <button onclick="App.UI.openModal('modal-debt')" class="bg-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/30 active:scale-95 transition">Agregar Deuda</button>
+            </div>
+        </section>
+
+        <!-- ================= VISTA: SIMULADOR ================= -->
+        <section id="view-simulator" class="view space-y-6">
+            <h2 class="text-2xl font-bold">Simulador Bola de Nieve</h2>
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard border border-slate-200 dark:border-slate-700">
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">¿Qué pasa si aplicas un dinero extra mensual a tu próxima deuda objetivo?</p>
+                
+                <label class="block text-sm font-medium mb-2">Pago Extra Mensual Disponible</label>
+                <div class="relative mb-6">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input type="number" id="sim-extra" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-3 pl-8 pr-4 outline-none focus:ring-2 focus:ring-primary" placeholder="Ej. 150000" oninput="App.simulate()">
+                </div>
+                
+                <div id="sim-results" class="hidden space-y-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800">
+                        <h4 class="font-bold text-primary mb-2"><i class="fa-solid fa-rocket mr-1"></i> Impacto del Pago Extra</h4>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 mb-1">Deuda objetivo: <span id="sim-target-name" class="font-bold"></span></p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Meses ahorrados estimados: <span id="sim-months-saved" class="font-bold text-green-600 dark:text-green-400"></span></p>
+                    </div>
+                    <p class="text-xs text-slate-400 text-center">* Los cálculos son estimaciones lineales sin contar variaciones de tasas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA: HISTORIAL ================= -->
+        <section id="view-history" class="view space-y-4">
+            <h2 class="text-2xl font-bold mb-2">Historial</h2>
+            <div class="glass p-1 rounded-2xl dark:bg-darkCard">
+                <div id="history-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <!-- Historial inyectado por JS -->
+                </div>
+            </div>
+            <div id="history-empty" class="hidden text-center py-8 text-slate-500 text-sm">
+                Aún no hay movimientos registrados.
+            </div>
+        </section>
+
+        <!-- ================= VISTA: AJUSTES ================= -->
+        <section id="view-settings" class="view space-y-6">
+            <h2 class="text-2xl font-bold">Ajustes y Datos</h2>
+            
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i> Reportes</h3>
+                <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Descargar Resumen en PDF
+                </button>
+            </div>
+
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-database text-blue-500 mr-2"></i> Copia de Seguridad</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="App.exportData()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
+                        Exportar JSON
+                    </button>
+                    <label class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm text-center cursor-pointer">
+                        Importar JSON
+                        <input type="file" id="import-file" accept=".json" class="hidden" onchange="App.importData(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard border border-red-200 dark:border-red-900/30">
+                <h3 class="font-semibold text-red-500 mb-2">Zona de Peligro</h3>
+                <button onclick="App.loadMockData()" class="w-full mb-3 bg-slate-100 dark:bg-slate-800 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
+                    Cargar Datos de Ejemplo
+                </button>
+                <button onclick="App.UI.openModal('modal-wipe')" class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-200 dark:border-red-800 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
+                    Borrar Todos los Datos
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Menú Inferior (Mobile First) -->
+    <nav class="fixed bottom-0 left-0 w-full glass pb-safe pt-2 px-6 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <button onclick="App.nav('dashboard')" class="nav-btn active flex flex-col items-center p-2 text-slate-400 hover:text-primary transition-colors data-[active=true]:text-primary" data-target="dashboard">
+            <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Inicio</span>
+        </button>
+        <button onclick="App.nav('debts')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-primary transition-colors data-[active=true]:text-primary" data-target="debts">
+            <i class="fa-solid fa-list-ul text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Deudas</span>
+        </button>
+        
+        <!-- Botón Flotante Central -->
+        <div class="relative -top-6">
+            <button onclick="App.UI.openModal('modal-payment')" class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-xl shadow-primary/40 border-[4px] border-[#f8fafc] dark:border-[#0f172a] active:scale-90 transition-transform">
+                <i class="fa-solid fa-dollar-sign text-2xl"></i>
+            </button>
+        </div>
+        
+        <button onclick="App.nav('simulator')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-primary transition-colors data-[active=true]:text-primary" data-target="simulator">
+            <i class="fa-solid fa-wand-magic-sparkles text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Simula</span>
+        </button>
+        <button onclick="App.UI.toggleMoreMenu()" class="flex flex-col items-center p-2 text-slate-400 hover:text-primary transition-colors">
+            <i class="fa-solid fa-bars text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Más</span>
+        </button>
+    </nav>
+
+    <!-- Menú "Más" Overlay -->
+    <div id="more-menu-overlay" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm transition-opacity" onclick="App.UI.toggleMoreMenu()"></div>
+    <div id="more-menu" class="fixed bottom-0 left-0 w-full glass rounded-t-3xl z-50 transform translate-y-full transition-transform duration-300 shadow-[0_-20px_50px_rgba(0,0,0,0.2)] pb-safe">
+        <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="p-6 grid grid-cols-2 gap-4">
+            <button onclick="App.nav('history'); App.UI.toggleMoreMenu()" class="glass p-4 rounded-2xl flex flex-col items-center gap-2 dark:bg-darkCard active:scale-95">
+                <i class="fa-solid fa-clock-rotate-left text-2xl text-blue-500"></i>
+                <span class="text-sm font-medium">Historial</span>
+            </button>
+            <button onclick="App.nav('settings'); App.UI.toggleMoreMenu()" class="glass p-4 rounded-2xl flex flex-col items-center gap-2 dark:bg-darkCard active:scale-95">
+                <i class="fa-solid fa-gear text-2xl text-slate-500"></i>
+                <span class="text-sm font-medium">Ajustes</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= MODALES ================= -->
+
+    <!-- Modal: Nueva/Editar Deuda -->
+    <div id="modal-debt" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
+        <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] modal-slide-up sm:animate-none">
+            <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
+            <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-lg" id="modal-debt-title">Nueva Deuda</h3>
+                <button onclick="App.UI.closeModal('modal-debt')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto pb-safe">
+                <form id="form-debt" onsubmit="App.saveDebt(event)" class="space-y-4">
+                    <input type="hidden" id="debt-id">
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Nombre / Entidad *</label>
+                        <input type="text" id="debt-name" required class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm" placeholder="Ej. Tarjeta Visa, Préstamo familiar...">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Saldo Actual ($) *</label>
+                            <input type="number" id="debt-balance" required min="0" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Mínima ($) *</label>
+                            <input type="number" id="debt-min-payment" required min="0" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">¿Tiene Interés?</label>
+                            <select id="debt-has-interest" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm" onchange="document.getElementById('interest-container').classList.toggle('hidden', this.value === 'no')">
+                                <option value="yes">Sí</option>
+                                <option value="no">No (0%)</option>
+                            </select>
+                        </div>
+                        <div id="interest-container">
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Tasa Mensual (%)</label>
+                            <input type="number" id="debt-interest-rate" min="0" step="0.01" value="0" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-primary text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/30 active:scale-95 transition">Guardar Deuda</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Pago -->
+    <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
+        <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col modal-slide-up sm:animate-none">
+            <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
+            <div class="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-hand-holding-dollar text-secondary mr-2"></i> Registrar Pago</h3>
+                <button onclick="App.UI.closeModal('modal-payment')" class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 pb-safe">
+                <form id="form-payment" onsubmit="App.processPayment(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Selecciona la Deuda *</label>
+                        <select id="pay-debt-id" required class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                            <!-- Options inyectadas por JS -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Monto a Pagar ($) *</label>
+                        <input type="number" id="pay-amount" required min="1" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-lg font-bold text-center outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 hidden" id="pay-estimate-box">
+                        <p class="text-xs text-blue-800 dark:text-blue-300">Estimación (Aprox):</p>
+                        <div class="flex justify-between text-sm font-medium mt-1">
+                            <span>A Interés: <span id="pay-est-interest" class="text-red-500">$0</span></span>
+                            <span>A Capital: <span id="pay-est-capital" class="text-green-500">$0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-secondary text-white py-3.5 rounded-xl font-bold shadow-lg shadow-secondary/30 active:scale-95 transition">Confirmar Pago</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Borrado -->
+    <div id="modal-wipe" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
+         <div class="bg-white dark:bg-darkCard w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-safe text-center border-t sm:border border-red-500 modal-slide-up sm:animate-none">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 class="text-xl font-bold mb-2">¿Borrar todo?</h3>
+            <p class="text-sm text-slate-500 mb-4">Esta acción no se puede deshacer. Escribe <strong class="text-red-500">BORRAR</strong> para confirmar.</p>
+            <input type="text" id="wipe-confirm" class="w-full bg-slate-100 dark:bg-slate-800 text-center rounded-xl p-3 mb-4 uppercase font-bold tracking-widest outline-none focus:ring-2 focus:ring-red-500" placeholder="BORRAR">
+            <div class="flex gap-3">
+                <button onclick="App.UI.closeModal('modal-wipe')" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-medium active:scale-95">Cancelar</button>
+                <button onclick="App.wipeDataExecute()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toasts Container -->
+    <div id="toast-container" class="fixed top-safe pt-4 left-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none items-center"></div>
+
+    <script>
+        const App = {
+            state: {
+                debts: [],
+                history: [],
+                theme: 'light'
+            },
+            chartInstance: null,
+
+            // 1. Inicialización
+            init() {
+                this.loadData();
+                this.applyTheme();
+                this.updateDate();
+                this.nav('dashboard');
+                
+                // Event Listeners dinámicos
+                document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
+                document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
+            },
+
+            // 2. Utilidades
+            formatCOP(amount) {
+                return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
+            },
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            },
+            getToday() {
+                return new Date().toISOString().split('T')[0];
+            },
+            updateDate() {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-CO', options);
+            },
+            showToast(msg, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+                const icon = type === 'success' ? 'fa-check' : 'fa-xmark';
+                
+                toast.className = `${bg} text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium transition-all duration-300 transform translate-y-[-20px] opacity-0`;
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${msg}`;
+                
+                container.appendChild(toast);
+                
+                // Animar entrada
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateY(0)';
+                    toast.style.opacity = '1';
+                });
+
+                // Quitar
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+            // 3. Almacenamiento Local
+            saveData() {
+                localStorage.setItem('deudaCeroData', JSON.stringify(this.state));
+                this.renderAll();
+            },
+            loadData() {
+                const data = localStorage.getItem('deudaCeroData');
+                if (data) {
+                    try {
+                        this.state = JSON.parse(data);
+                    } catch (e) {
+                        console.error("Error parsing local storage", e);
+                    }
+                }
+            },
+            
+            // 4. Navegación y UI
+            nav(viewId) {
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${viewId}`).classList.add('active');
+                
+                document.querySelectorAll('.nav-btn').forEach(b => {
+                    b.dataset.active = (b.dataset.target === viewId) ? 'true' : 'false';
+                });
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.renderAll();
+            },
+            toggleTheme() {
+                this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
+                this.applyTheme();
+                this.saveData();
+            },
+            applyTheme() {
+                if (this.state.theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                if(this.chartInstance) this.renderChart(); // Redibujar chart para colores
+            },
+            UI: {
+                toggleMoreMenu() {
+                    const menu = document.getElementById('more-menu');
+                    const overlay = document.getElementById('more-menu-overlay');
+                    if(menu.classList.contains('translate-y-full')) {
+                        overlay.classList.remove('hidden');
+                        setTimeout(() => menu.classList.remove('translate-y-full'), 10);
+                    } else {
+                        menu.classList.add('translate-y-full');
+                        setTimeout(() => overlay.classList.add('hidden'), 300);
+                    }
+                },
+                openModal(id) {
+                    const modal = document.getElementById(id);
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    if (id === 'modal-debt') App.resetDebtForm();
+                    if (id === 'modal-payment') App.populatePaymentSelect();
+                },
+                closeModal(id) {
+                    const modal = document.getElementById(id);
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            },
+
+            // 5. Renderizado
+            renderAll() {
+                this.renderDashboard();
+                this.renderDebts();
+                this.renderHistory();
+                this.simulate();
+            },
+            
+            renderDashboard() {
+                const activeDebts = this.state.debts.filter(d => d.balance > 0);
+                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve
+
+                const totalDebt = activeDebts.reduce((acc, d) => acc + d.balance, 0);
+                document.getElementById('dash-total-debt').textContent = this.formatCOP(totalDebt);
+                document.getElementById('dash-active-count').textContent = activeDebts.length;
+                
+                // Pagado total (desde historial)
+                const totalPaid = this.state.history
+                    .filter(h => h.type === 'payment')
+                    .reduce((acc, h) => acc + h.amount, 0);
+                document.getElementById('dash-total-paid').textContent = this.formatCOP(totalPaid);
+
+                // Próximo objetivo
+                if (activeDebts.length > 0) {
+                    const target = activeDebts[0];
+                    document.getElementById('dash-next-target').textContent = target.name;
+                    // Progreso (calculado en base al saldo inicial vs actual. Si no hay inicial, asumimos el actual como máximo temporal)
+                    const initial = target.initialBalance || target.balance;
+                    const progress = initial > 0 ? ((initial - target.balance) / initial) * 100 : 0;
+                    document.getElementById('dash-target-progress').style.width = `${Math.min(100, Math.max(0, progress))}%`;
+                } else {
+                    document.getElementById('dash-next-target').textContent = "¡Libre de deudas!";
+                    document.getElementById('dash-target-progress').style.width = "100%";
+                }
+
+                this.renderChart();
+            },
+
+            renderDebts() {
+                const list = document.getElementById('debts-list');
+                const empty = document.getElementById('debts-empty');
+                
+                let activeDebts = this.state.debts.filter(d => d.balance > 0);
+                
+                if (activeDebts.length === 0) {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
+                empty.classList.add('hidden');
+                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve: menor a mayor
+
+                list.innerHTML = activeDebts.map((d, index) => {
+                    const isTarget = index === 0;
+                    const interestBadge = d.hasInterest ? `<span class="bg-red-100 dark:bg-red-900/30 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">${d.interestRate}% mes</span>` : `<span class="bg-green-100 dark:bg-green-900/30 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">0% Int.</span>`;
+                    
+                    return `
+                    <div class="glass p-4 rounded-2xl dark:bg-darkCard relative overflow-hidden ${isTarget ? 'border-2 border-primary shadow-lg shadow-primary/10' : 'border border-slate-200 dark:border-slate-800'}">
+                        ${isTarget ? '<div class="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">OBJETIVO</div>' : ''}
+                        
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 dark:text-slate-100">${d.name}</h4>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-slate-500">Min: ${this.formatCOP(d.minPayment)}</span>
+                                    ${interestBadge}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg text-slate-800 dark:text-white">${this.formatCOP(d.balance)}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="App.editDebt('${d.id}')" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-2 rounded-xl text-xs font-medium hover:bg-slate-200 active:scale-95 transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
+                            <button onclick="App.deleteDebt('${d.id}')" class="flex-1 bg-red-50 dark:bg-red-900/20 text-red-500 py-2 rounded-xl text-xs font-medium hover:bg-red-100 active:scale-95 transition"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            },
+
+            renderHistory() {
+                const list = document.getElementById('history-list');
+                const empty = document.getElementById('history-empty');
+                
+                if (this.state.history.length === 0) {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
+                empty.classList.add('hidden');
+                
+                // Mostrar últimos 30 movimientos, más recientes primero
+                const recent = [...this.state.history].reverse().slice(0, 30);
+                
+                list.innerHTML = recent.map(h => {
+                    let icon, color, sign = '';
+                    if (h.type === 'payment') { icon = 'fa-arrow-down'; color = 'text-green-500 bg-green-100 dark:bg-green-900/30'; sign = '-'; }
+                    else if (h.type === 'create') { icon = 'fa-plus'; color = 'text-blue-500 bg-blue-100 dark:bg-blue-900/30'; }
+                    else { icon = 'fa-pen'; color = 'text-slate-500 bg-slate-100 dark:bg-slate-800'; }
+
+                    return `
+                    <div class="py-3 px-3 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color}">
+                            <i class="fa-solid ${icon}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm text-slate-800 dark:text-slate-200 truncate">${h.desc}</p>
+                            <p class="text-xs text-slate-400">${new Date(h.date).toLocaleDateString('es-CO')}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="font-bold text-sm ${h.type === 'payment' ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-slate-300'}">
+                                ${sign}${this.formatCOP(h.amount)}
+                            </p>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            },
+
+            renderChart() {
+                const container = document.getElementById('chart-container');
+                const ctx = document.getElementById('debtChart').getContext('2d');
+                
+                // Generar datos históricos falsos basados en pagos para el gráfico (simplificado para SPA)
+                // En un entorno real, guardaríamos instantáneas mensuales.
+                // Aquí sumaremos el total actual y los pagos hacia atrás para recrear el pasado.
+                
+                let activeDebts = this.state.debts.filter(d => d.balance > 0);
+                if (activeDebts.length === 0 && this.state.history.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+                
+                container.classList.remove('hidden');
+                
+                const totalCurrent = activeDebts.reduce((acc, d) => acc + d.balance, 0);
+                let dataPoints = [totalCurrent];
+                let labels = ['Actual'];
+                
+                // Reconstruir últimos 5 pagos para el gráfico visual
+                let runningTotal = totalCurrent;
+                const payments = this.state.history.filter(h => h.type === 'payment').reverse().slice(0, 5);
+                
+                payments.forEach((p, i) => {
+                    runningTotal += p.amount; // Hacia atrás en el tiempo, la deuda era mayor
+                    dataPoints.unshift(runningTotal);
+                    labels.unshift(`-${i+1}`);
+                });
+
+                if (this.chartInstance) this.chartInstance.destroy();
+
+                const isDark = this.state.theme === 'dark';
+                const textColor = isDark ? '#cbd5e1' : '#64748b';
+                const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+                this.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Deuda',
+                            data: dataPoints,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#3b82f6',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { 
+                                beginAtZero: true, 
+                                ticks: { color: textColor, callback: (val) => '$' + (val/1000) + 'k' },
+                                grid: { color: gridColor }
+                            },
+                            x: { 
+                                ticks: { color: textColor },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // 6. Lógica de Negocio
+            resetDebtForm() {
+                document.getElementById('form-debt').reset();
+                document.getElementById('debt-id').value = '';
+                document.getElementById('modal-debt-title').textContent = 'Nueva Deuda';
+                document.getElementById('interest-container').classList.remove('hidden');
+            },
+
+            saveDebt(e) {
+                e.preventDefault();
+                const id = document.getElementById('debt-id').value;
+                const name = document.getElementById('debt-name').value;
+                const balance = parseFloat(document.getElementById('debt-balance').value);
+                const minPayment = parseFloat(document.getElementById('debt-min-payment').value);
+                const hasInterest = document.getElementById('debt-has-interest').value === 'yes';
+                const interestRate = hasInterest ? parseFloat(document.getElementById('debt-interest-rate').value || 0) : 0;
+
+                const debtObj = {
+                    id: id || this.generateId(),
+                    name,
+                    balance,
+                    initialBalance: balance, // Guardamos el inicial para la barra de progreso
+                    minPayment,
+                    hasInterest,
+                    interestRate,
+                    dateCreated: this.getToday()
+                };
+
+                if (id) {
+                    const idx = this.state.debts.findIndex(d => d.id === id);
+                    if (idx > -1) {
+                        debtObj.initialBalance = this.state.debts[idx].initialBalance; // Mantener inicial original
+                        this.state.debts[idx] = debtObj;
+                        this.addHistoryRecord('edit', `Editaste deuda: ${name}`, 0);
+                    }
+                } else {
+                    this.state.debts.push(debtObj);
+                    this.addHistoryRecord('create', `Nueva deuda: ${name}`, balance);
+                }
+
+                this.saveData();
+                this.UI.closeModal('modal-debt');
+                this.showToast('Deuda guardada correctamente');
+            },
+
+            editDebt(id) {
+                const debt = this.state.debts.find(d => d.id === id);
+                if (!debt) return;
+
+                document.getElementById('debt-id').value = debt.id;
+                document.getElementById('debt-name').value = debt.name;
+                document.getElementById('debt-balance').value = debt.balance;
+                document.getElementById('debt-min-payment').value = debt.minPayment;
+                document.getElementById('debt-has-interest').value = debt.hasInterest ? 'yes' : 'no';
+                document.getElementById('debt-interest-rate').value = debt.interestRate;
+                
+                document.getElementById('interest-container').classList.toggle('hidden', !debt.hasInterest);
+                document.getElementById('modal-debt-title').textContent = 'Editar Deuda';
+                
+                this.UI.openModal('modal-debt');
+            },
+
+            deleteDebt(id) {
+                if(confirm('¿Estás seguro de eliminar esta deuda? Se borrará de tus cálculos.')) {
+                    this.state.debts = this.state.debts.filter(d => d.id !== id);
+                    this.addHistoryRecord('delete', 'Deuda eliminada', 0);
+                    this.saveData();
+                    this.showToast('Deuda eliminada');
+                }
+            },
+
+            populatePaymentSelect() {
+                const select = document.getElementById('pay-debt-id');
+                const active = this.state.debts.filter(d => d.balance > 0).sort((a, b) => a.balance - b.balance);
+                
+                if (active.length === 0) {
+                    select.innerHTML = '<option value="">No hay deudas activas</option>';
+                    document.getElementById('pay-amount').disabled = true;
+                    return;
+                }
+                
+                document.getElementById('pay-amount').disabled = false;
+                select.innerHTML = active.map(d => `<option value="${d.id}">${d.name} (${this.formatCOP(d.balance)})</option>`).join('');
+                this.estimatePayment(); // Calcular estimado inicial
+            },
+
+            estimatePayment() {
+                const select = document.getElementById('pay-debt-id');
+                const amountInput = document.getElementById('pay-amount');
+                const box = document.getElementById('pay-estimate-box');
+                
+                if (!select.value || !amountInput.value) {
+                    box.classList.add('hidden');
+                    return;
+                }
+
+                const debt = this.state.debts.find(d => d.id === select.value);
+                const amount = parseFloat(amountInput.value);
+
+                if (debt && debt.hasInterest && debt.interestRate > 0) {
+                    // Cálculo estimado: Interés = Saldo * Tasa Mensual
+                    const estimatedInterest = debt.balance * (debt.interestRate / 100);
+                    let capital = amount - estimatedInterest;
+                    if(capital < 0) capital = 0;
+
+                    document.getElementById('pay-est-interest').textContent = this.formatCOP(estimatedInterest);
+                    document.getElementById('pay-est-capital').textContent = this.formatCOP(capital);
+                    box.classList.remove('hidden');
+                } else {
+                    box.classList.add('hidden');
+                }
+            },
+
+            processPayment(e) {
+                e.preventDefault();
+                const id = document.getElementById('pay-debt-id').value;
+                const amount = parseFloat(document.getElementById('pay-amount').value);
+                
+                const debt = this.state.debts.find(d => d.id === id);
+                if (!debt) return;
+
+                if (amount <= 0) {
+                    this.showToast('El pago debe ser mayor a 0', 'error');
+                    return;
+                }
+
+                let actualCapitalPaid = amount;
+
+                // Lógica de interés
+                if (debt.hasInterest && debt.interestRate > 0) {
+                    const interest = debt.balance * (debt.interestRate / 100);
+                    actualCapitalPaid = amount - interest;
+                    
+                    if (actualCapitalPaid < 0) {
+                        alert('Atención: El pago no cubre los intereses de este mes. Tu deuda crecerá.');
+                        debt.balance += Math.abs(actualCapitalPaid); // La deuda crece
+                    } else {
+                        debt.balance -= actualCapitalPaid;
+                    }
+                } else {
+                    debt.balance -= amount;
+                }
+
+                if (debt.balance <= 0) {
+                    debt.balance = 0;
+                    this.showToast(`¡Felicidades! Pagaste totalmente ${debt.name}`);
+                } else {
+                    this.showToast('Pago registrado correctamente');
+                }
+
+                this.addHistoryRecord('payment', `Pago a ${debt.name}`, amount);
+                this.saveData();
+                this.UI.closeModal('modal-payment');
+                document.getElementById('form-payment').reset();
+            },
+
+            addHistoryRecord(type, desc, amount) {
+                this.state.history.push({
+                    id: this.generateId(),
+                    date: new Date().toISOString(),
+                    type,
+                    desc,
+                    amount
+                });
+            },
+
+            // 7. Simulador
+            simulate() {
+                const extraInput = document.getElementById('sim-extra').value;
+                const extra = parseFloat(extraInput) || 0;
+                const resBox = document.getElementById('sim-results');
+                
+                const active = this.state.debts.filter(d => d.balance > 0).sort((a, b) => a.balance - b.balance);
+                
+                if (active.length === 0 || extra <= 0) {
+                    resBox.classList.add('hidden');
+                    return;
+                }
+
+                const target = active[0];
+                document.getElementById('sim-target-name').textContent = target.name;
+
+                // Lógica lineal muy simplificada para demostrar el impacto
+                const normalPayment = target.minPayment;
+                const boostedPayment = normalPayment + extra;
+
+                if (normalPayment <= 0 && target.hasInterest) {
+                    document.getElementById('sim-months-saved').textContent = "Revisa cuota mínima";
+                    resBox.classList.remove('hidden');
+                    return;
+                }
+
+                let normalMonths = 0;
+                let boostedMonths = 0;
+
+                // Cálculo sin extra (Aproximación lineal)
+                let tempBalance = target.balance;
+                let failsafe = 0;
+                while (tempBalance > 0 && failsafe < 360) {
+                    let interest = target.hasInterest ? tempBalance * (target.interestRate/100) : 0;
+                    let cap = normalPayment - interest;
+                    if(cap <= 0) { normalMonths = 999; break; } // Deuda infinita
+                    tempBalance -= cap;
+                    normalMonths++;
+                    failsafe++;
+                }
+
+                // Cálculo con extra
+                tempBalance = target.balance;
+                failsafe = 0;
+                while (tempBalance > 0 && failsafe < 360) {
+                    let interest = target.hasInterest ? tempBalance * (target.interestRate/100) : 0;
+                    let cap = boostedPayment - interest;
+                    if(cap <= 0) { boostedMonths = 999; break; }
+                    tempBalance -= cap;
+                    boostedMonths++;
+                    failsafe++;
+                }
+
+                if (normalMonths === 999) {
+                    document.getElementById('sim-months-saved').textContent = "Infinito → " + boostedMonths + " meses";
+                } else {
+                    const saved = normalMonths - boostedMonths;
+                    document.getElementById('sim-months-saved').textContent = saved > 0 ? `${saved} meses menos` : 'Mismo tiempo';
+                }
+
+                resBox.classList.remove('hidden');
+            },
+
+            // 8. Utilidades de Datos
+            exportData() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state));
+                const node = document.createElement('a');
+                node.setAttribute("href", dataStr);
+                node.setAttribute("download", "deudacero_backup.json");
+                document.body.appendChild(node);
+                node.click();
+                node.remove();
+                this.showToast('Backup descargado');
+            },
+
+            importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if(imported.debts && imported.history) {
+                            this.state = imported;
+                            this.saveData();
+                            this.showToast('Datos importados correctamente');
+                        } else {
+                            throw new Error('Formato inválido');
+                        }
+                    } catch (error) {
+                        this.showToast('Error al importar el archivo', 'error');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Reset input
+            },
+
+            exportPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(20);
+                doc.text("Reporte DeudaCero", 14, 20);
+                
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                const total = this.state.debts.filter(d=>d.balance>0).reduce((acc,d)=>acc+d.balance, 0);
+                doc.text(`Total Deuda Activa: ${this.formatCOP(total)}`, 14, 30);
+                doc.text(`Fecha de reporte: ${new Date().toLocaleDateString('es-CO')}`, 14, 38);
+
+                const activeDebts = this.state.debts.filter(d => d.balance > 0).map(d => [
+                    d.name,
+                    this.formatCOP(d.balance),
+                    this.formatCOP(d.minPayment),
+                    d.hasInterest ? `${d.interestRate}%` : '0%'
+                ]);
+
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Deuda/Entidad', 'Saldo Actual', 'Cuota Min', 'Tasa (Mes)']],
+                    body: activeDebts,
+                    theme: 'striped',
+                    headStyles: { fillColor: [59, 130, 246] }
+                });
+
+                doc.save('DeudaCero_Reporte.pdf');
+                this.showToast('PDF Generado');
+            },
+
+            wipeDataExecute() {
+                const confirmTxt = document.getElementById('wipe-confirm').value;
+                if (confirmTxt === 'BORRAR') {
+                    this.state = { debts: [], history: [], theme: this.state.theme };
+                    this.saveData();
+                    this.UI.closeModal('modal-wipe');
+                    document.getElementById('wipe-confirm').value = '';
+                    this.showToast('Todos los datos fueron borrados', 'error');
+                } else {
+                    this.showToast('Debes escribir BORRAR en mayúsculas', 'error');
+                }
+            },
+
+            loadMockData() {
+                this.state.debts = [
+                    { id: '1', name: 'Tarjeta Visa', balance: 2500000, initialBalance: 3000000, minPayment: 150000, hasInterest: true, interestRate: 2.5, dateCreated: this.getToday() },
+                    { id: '2', name: 'Préstamo Mamá', balance: 800000, initialBalance: 1000000, minPayment: 50000, hasInterest: false, interestRate: 0, dateCreated: this.getToday() },
+                    { id: '3', name: 'Crédito Moto', balance: 4200000, initialBalance: 5000000, minPayment: 220000, hasInterest: true, interestRate: 1.8, dateCreated: this.getToday() }
+                ];
+                this.state.history = [
+                    { id: 'h1', date: this.getToday(), type: 'create', desc: 'Datos de prueba cargados', amount: 0 }
+                ];
+                this.saveData();
+                this.showToast('Datos de prueba cargados');
+            }
+        };
+
+        // Iniciar app al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>
