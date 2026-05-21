@@ -144,7 +144,9 @@
                     <input type="checkbox" id="login-remember" class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300">
                     <label for="login-remember" class="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">Recordar sesión</label>
                 </div>
-                <button type="submit" class="w-full bg-primary text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/30 active:scale-95 transition mt-2">Iniciar Sesión</button>
+                <button type="submit" id="btn-login" class="w-full bg-primary text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/30 active:scale-95 transition mt-2 flex justify-center items-center">
+                    <span>Iniciar Sesión</span>
+                </button>
             </form>
         </div>
     </div>
@@ -290,15 +292,15 @@
             
             <div class="glass p-5 rounded-3xl dark:bg-darkCard border border-slate-200 dark:border-slate-800">
                 <h3 class="font-semibold mb-2"><i class="fa-solid fa-user-shield text-slate-500 mr-2"></i> Sesión</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Conectado como <strong class="text-slate-800 dark:text-white">Luismar17</strong></p>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Conectado y seguro</p>
                 <button onclick="App.logout()" class="w-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 py-3 rounded-xl font-medium active:scale-95 transition text-sm text-slate-800 dark:text-white">
-                    Cerrar Sesión
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Cerrar Sesión
                 </button>
             </div>
 
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
                 <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-cloud text-blue-500 mr-2"></i> Estado de la Nube</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos cuentan con un respaldo automático local y en la nube (Firebase).</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos cuentan con sincronización en tiempo real entre tus dispositivos (Firebase).</p>
                 <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2 mt-2">
                     <i class="fa-solid fa-file-pdf text-red-500"></i> Descargar Resumen en PDF
                 </button>
@@ -310,7 +312,7 @@
                     <button onclick="App.exportData()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
                         Exportar JSON
                     </button>
-                    <label class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm text-center cursor-pointer">
+                    <label class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm text-center cursor-pointer flex items-center justify-center">
                         Importar JSON
                         <input type="file" id="import-file" accept=".json" class="hidden" onchange="App.importData(event)">
                     </label>
@@ -483,7 +485,8 @@
     <!-- Firebase & Lógica Principal -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Importar todas las funciones necesarias de autenticación real
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -511,50 +514,81 @@
             userId: null,
             dbRef: null,
 
-            // 1. Inicialización ultra-rápida y App Lock
+            // 1. Inicialización escuchando el estado real de Firebase
             async init() {
                 this.updateDate();
                 
-                // Comprobar estado de la sesión local
-                const remembered = localStorage.getItem('deudacero_remembered') === 'true';
-                const sessionActive = sessionStorage.getItem('deudacero_session') === 'true';
+                // Event Listeners UI
+                document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
+                document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
 
-                if (remembered || sessionActive) {
-                    this.completeInit();
-                } else {
-                    // Mostrar pantalla de login si no hay sesión
-                    const loginScreen = document.getElementById('login-screen');
-                    loginScreen.classList.remove('hidden');
-                    loginScreen.classList.add('flex');
-                }
+                // Firebase maneja la sesión de manera segura. Si ya entraste antes, te deja pasar.
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.userId = user.uid; // ¡Este UID será idéntico en PC y celular!
+                        this.dbRef = doc(db, 'artifacts', globalAppId, 'users', user.uid, 'userState', 'main');
+                        this.completeInit(); // Oculta login y carga base de datos
+                    } else {
+                        // Si no hay sesión válida, muestra el Login
+                        const loginScreen = document.getElementById('login-screen');
+                        loginScreen.classList.remove('hidden');
+                        loginScreen.classList.add('flex');
+                    }
+                });
             },
 
-            login(e) {
+            // Sistema de Login transformando el usuario en un identificador seguro
+            async login(e) {
                 e.preventDefault();
                 const user = document.getElementById('login-user').value;
                 const pass = document.getElementById('login-pass').value;
                 const remember = document.getElementById('login-remember').checked;
+                const btn = document.getElementById('btn-login');
 
-                if (user === 'Luismar17' && pass === 'Lm17@5**') {
-                    sessionStorage.setItem('deudacero_session', 'true');
-                    if (remember) {
-                        localStorage.setItem('deudacero_remembered', 'true');
+                // Transformamos tu nombre de usuario en un correo estructurado para Firebase
+                const email = `${user.toLowerCase().replace(/[^a-z0-9]/g, '')}@deudacero.app`;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+
+                try {
+                    // Configurar si Firebase debe recordar la sesión o borrarla al cerrar el navegador
+                    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+                    await setPersistence(auth, persistence);
+
+                    try {
+                        // Intentar iniciar sesión si ya te habías registrado antes
+                        await signInWithEmailAndPassword(auth, email, pass);
+                        this.showToast('Bienvenido de nuevo');
+                    } catch (err) {
+                        // Si el usuario no existe, lo creamos automáticamente (primera vez)
+                        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                            await createUserWithEmailAndPassword(auth, email, pass);
+                            this.showToast('Cuenta configurada con éxito');
+                        } else {
+                            throw err; // Otro error como contraseña equivocada
+                        }
                     }
-                    this.showToast('Bienvenido ' + user);
-                    this.completeInit();
-                } else {
+                    // Si todo sale bien, onAuthStateChanged detectará el login y llamará a completeInit()
+                } catch (error) {
+                    console.error("Error en autenticación:", error);
                     this.showToast('Credenciales incorrectas', 'error');
+                } finally {
+                    btn.innerHTML = '<span>Iniciar Sesión</span>';
+                    btn.disabled = false;
                 }
             },
 
-            logout() {
-                localStorage.removeItem('deudacero_remembered');
-                sessionStorage.removeItem('deudacero_session');
-                location.reload();
+            async logout() {
+                try {
+                    await signOut(auth);
+                    location.reload(); // Recarga la página para mostrar el login
+                } catch (error) {
+                    console.error("Error cerrando sesión:", error);
+                }
             },
 
             async completeInit() {
-                // Ocultar login suavemente
+                // Ocultar pantalla de login
                 const loginScreen = document.getElementById('login-screen');
                 loginScreen.style.opacity = '0';
                 setTimeout(() => {
@@ -562,46 +596,9 @@
                     loginScreen.classList.remove('flex');
                 }, 300);
 
-                // PASO 1: Cargar respaldo local inmediatamente
-                const localBackup = localStorage.getItem('deudacero_local_backup');
-                if (localBackup) {
-                    try {
-                        const parsed = JSON.parse(localBackup);
-                        if (parsed.debts) this.state = parsed;
-                        this.applyTheme();
-                    } catch (e) { console.error("Error leyendo local storage", e); }
-                }
-                
-                // Renderizar pantalla de inmediato
-                this.renderAll();
+                // Conectar al Listener de Firestore (En tiempo real)
+                this.loadDataFirebase();
                 this.nav('dashboard');
-                
-                // Event Listeners
-                document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
-                document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
-
-                // PASO 2: Conectar Firebase en segundo plano
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        this.userId = user.uid;
-                        this.dbRef = doc(db, 'artifacts', globalAppId, 'users', user.uid, 'userState', 'main');
-                        this.loadDataFirebase();
-                    }
-                });
-
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } catch (err) {
-                            await signInAnonymously(auth);
-                        }
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("No se pudo conectar a Firebase. Se usará el modo offline.", error);
-                }
             },
 
             // 2. Utilidades
@@ -643,47 +640,41 @@
 
             // 3. Sistema de Guardado a Prueba de Fallos
             async saveData() {
-                // A) RENDERIZADO OPTIMISTA: Actualizar la pantalla al instante.
+                // RENDERIZADO OPTIMISTA: Actualizar la pantalla al instante sin esperar la red
                 this.renderAll();
                 
-                // B) RESPALDO LOCAL: Guardar en el navegador (100% infalible contra problemas de red/permisos)
-                try {
-                    localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
-                } catch (e) { console.error("Error guardando local", e); }
-
-                // C) SINCRONIZACIÓN EN LA NUBE: Guardar silenciosamente en Firebase.
                 if (!this.userId || !this.dbRef) return;
                 
+                // SINCRONIZACIÓN EN LA NUBE: Guardar silenciosamente en Firebase.
                 try {
                     await setDoc(this.dbRef, this.state);
                 } catch (error) {
-                    console.error("Firebase denegó el guardado. Tus datos están seguros localmente.", error);
+                    console.error("Firebase denegó el guardado. Revisa permisos o conexión.", error);
+                    this.showToast('No se pudo subir a la nube', 'error');
                 }
             },
             
             loadDataFirebase() {
                 if (!this.userId || !this.dbRef) return;
                 
-                // Escuchar cambios desde la nube
+                // Escuchar cambios desde la nube (El puente entre PC y Celular)
                 onSnapshot(this.dbRef, (docSnap) => {
                     if (docSnap.exists()) {
                         this.state = docSnap.data();
                         
+                        // Prevención de errores de estructura base
                         if(!this.state.debts) this.state.debts = [];
                         if(!this.state.history) this.state.history = [];
                         if(!this.state.theme) this.state.theme = 'light';
                         
-                        // Guardar en local el estado oficial de la nube
-                        localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
-                        
                         this.applyTheme();
                         this.renderAll();
                     } else {
-                        // Documento nuevo
+                        // Si no existe, es la primera vez que entra con esta cuenta
                         this.saveData();
                     }
                 }, (error) => {
-                    console.error("Listener de Firebase desconectado. Usando modo local.", error);
+                    console.error("Listener de Firebase desconectado.", error);
                 });
             },
             
@@ -963,7 +954,6 @@
                     this.addHistoryRecord('create', `Nueva deuda: ${name}`, balance);
                 }
 
-                // Cierra la ventana y lanza el proceso de guardado (que ahora actualiza la pantalla al instante)
                 this.UI.closeModal('modal-debt');
                 this.saveData(); 
                 this.showToast('Deuda guardada correctamente');
