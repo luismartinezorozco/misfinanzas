@@ -250,7 +250,7 @@
             
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
                 <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-cloud text-blue-500 mr-2"></i> Estado de la Nube</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos están siendo sincronizados automáticamente con Firebase de forma segura.</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos cuentan con un respaldo automático local y en la nube (Firebase).</p>
                 <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2 mt-2">
                     <i class="fa-solid fa-file-pdf text-red-500"></i> Descargar Resumen en PDF
                 </button>
@@ -451,7 +451,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // Variable segura para el ID de la app (requerida para las reglas de Firebase)
         const globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         const App = {
@@ -464,40 +463,49 @@
             userId: null,
             dbRef: null,
 
-            // 1. Inicialización
+            // 1. Inicialización ultra-rápida (Doble capa: Local + Firebase)
             async init() {
                 this.updateDate();
+                
+                // PASO 1: Cargar respaldo local inmediatamente para no hacer esperar al usuario
+                const localBackup = localStorage.getItem('deudacero_local_backup');
+                if (localBackup) {
+                    try {
+                        const parsed = JSON.parse(localBackup);
+                        if (parsed.debts) this.state = parsed;
+                        this.applyTheme();
+                    } catch (e) { console.error("Error leyendo local storage", e); }
+                }
+                
+                // Renderizar pantalla de inmediato
+                this.renderAll();
                 this.nav('dashboard');
                 
-                // Event Listeners dinámicos
+                // Event Listeners
                 document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
                 document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
 
-                // Autenticación (Escucha cambios de estado de usuario)
+                // PASO 2: Conectar Firebase en segundo plano
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.userId = user.uid;
-                        // Regla estricta de rutas de BD (vital para que los permisos funcionen)
                         this.dbRef = doc(db, 'artifacts', globalAppId, 'users', user.uid, 'userState', 'main');
-                        this.loadData();
+                        this.loadDataFirebase();
                     }
                 });
 
-                // Intentar autenticar con token inyectado o anónimamente si falla/no existe
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         try {
                             await signInWithCustomToken(auth, __initial_auth_token);
-                        } catch (tokenError) {
-                            console.warn("Token no válido o no coincide, cayendo a auth anónima.", tokenError);
+                        } catch (err) {
                             await signInAnonymously(auth);
                         }
                     } else {
                         await signInAnonymously(auth);
                     }
                 } catch (error) {
-                    console.error("Error general de Auth:", error);
-                    this.showToast('Error de conexión a la nube', 'error');
+                    console.error("No se pudo conectar a Firebase. Se usará el modo offline.", error);
                 }
             },
 
@@ -526,13 +534,11 @@
                 
                 container.appendChild(toast);
                 
-                // Animar entrada
                 requestAnimationFrame(() => {
                     toast.style.transform = 'translateY(0)';
                     toast.style.opacity = '1';
                 });
 
-                // Quitar
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateY(-20px)';
@@ -540,41 +546,50 @@
                 }, 3000);
             },
 
-            // 3. Almacenamiento en Firebase
+            // 3. Sistema de Guardado a Prueba de Fallos
             async saveData() {
+                // A) RENDERIZADO OPTIMISTA: Actualizar la pantalla al instante.
+                this.renderAll();
+                
+                // B) RESPALDO LOCAL: Guardar en el navegador (100% infalible contra problemas de red/permisos)
+                try {
+                    localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
+                } catch (e) { console.error("Error guardando local", e); }
+
+                // C) SINCRONIZACIÓN EN LA NUBE: Guardar silenciosamente en Firebase.
                 if (!this.userId || !this.dbRef) return;
+                
                 try {
                     await setDoc(this.dbRef, this.state);
                 } catch (error) {
-                    console.error("Error guardando datos:", error);
-                    this.showToast("Error al guardar en la nube", "error");
+                    console.error("Firebase denegó el guardado. Tus datos están seguros localmente.", error);
                 }
             },
             
-            loadData() {
+            loadDataFirebase() {
                 if (!this.userId || !this.dbRef) return;
                 
-                // Listener en tiempo real de Firestore
+                // Escuchar cambios desde la nube
                 onSnapshot(this.dbRef, (docSnap) => {
                     if (docSnap.exists()) {
                         this.state = docSnap.data();
                         
-                        // Validar estructura base por seguridad
                         if(!this.state.debts) this.state.debts = [];
                         if(!this.state.history) this.state.history = [];
                         if(!this.state.theme) this.state.theme = 'light';
                         
+                        // Guardar en local el estado oficial de la nube
+                        localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
+                        
                         this.applyTheme();
                         this.renderAll();
                     } else {
-                        // Es usuario nuevo, inicializar documento
+                        // Documento nuevo
                         this.saveData();
-                        this.applyTheme();
-                        this.renderAll();
                     }
                 }, (error) => {
-                    console.error("Firebase listen error: ", error);
-                    this.showToast('Error sincronizando datos', 'error');
+                    console.error("Listener de Firebase desconectado. Usando modo local.", error);
+                    // Si Firebase falla, la app ya no depende de él gracias al renderizado optimista.
                 });
             },
             
@@ -601,7 +616,7 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-                if(this.chartInstance) this.renderChart(); // Redibujar chart para colores
+                if(this.chartInstance) this.renderChart();
             },
             UI: {
                 toggleMoreMenu() {
@@ -639,23 +654,20 @@
             
             renderDashboard() {
                 const activeDebts = this.state.debts.filter(d => d.balance > 0);
-                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve
+                activeDebts.sort((a, b) => a.balance - b.balance);
 
                 const totalDebt = activeDebts.reduce((acc, d) => acc + d.balance, 0);
                 document.getElementById('dash-total-debt').textContent = this.formatCOP(totalDebt);
                 document.getElementById('dash-active-count').textContent = activeDebts.length;
                 
-                // Pagado total (desde historial)
                 const totalPaid = this.state.history
                     .filter(h => h.type === 'payment')
                     .reduce((acc, h) => acc + h.amount, 0);
                 document.getElementById('dash-total-paid').textContent = this.formatCOP(totalPaid);
 
-                // Próximo objetivo
                 if (activeDebts.length > 0) {
                     const target = activeDebts[0];
                     document.getElementById('dash-next-target').textContent = target.name;
-                    // Progreso
                     const initial = target.initialBalance || target.balance;
                     const progress = initial > 0 ? ((initial - target.balance) / initial) * 100 : 0;
                     document.getElementById('dash-target-progress').style.width = `${Math.min(100, Math.max(0, progress))}%`;
@@ -680,7 +692,7 @@
                 }
                 
                 empty.classList.add('hidden');
-                activeDebts.sort((a, b) => a.balance - b.balance); // Bola de nieve
+                activeDebts.sort((a, b) => a.balance - b.balance);
 
                 list.innerHTML = activeDebts.map((d, index) => {
                     const isTarget = index === 0;
@@ -724,7 +736,6 @@
                 
                 empty.classList.add('hidden');
                 
-                // Mostrar últimos 30 movimientos
                 const recent = [...this.state.history].reverse().slice(0, 30);
                 
                 list.innerHTML = recent.map(h => {
@@ -858,8 +869,9 @@
                     this.addHistoryRecord('create', `Nueva deuda: ${name}`, balance);
                 }
 
-                this.saveData();
+                // Cierra la ventana y lanza el proceso de guardado (que ahora actualiza la pantalla al instante)
                 this.UI.closeModal('modal-debt');
+                this.saveData(); 
                 this.showToast('Deuda guardada correctamente');
             },
 
@@ -967,9 +979,9 @@
                 }
 
                 this.addHistoryRecord('payment', `Pago a ${debt.name}`, amount);
-                this.saveData();
                 this.UI.closeModal('modal-payment');
                 document.getElementById('form-payment').reset();
+                this.saveData();
             },
 
             addHistoryRecord(type, desc, amount) {
@@ -1010,7 +1022,6 @@
                 let normalMonths = 0;
                 let boostedMonths = 0;
 
-                // Cálculo sin extra (Aproximación lineal)
                 let tempBalance = target.balance;
                 let failsafe = 0;
                 while (tempBalance > 0 && failsafe < 360) {
@@ -1022,7 +1033,6 @@
                     failsafe++;
                 }
 
-                // Cálculo con extra
                 tempBalance = target.balance;
                 failsafe = 0;
                 while (tempBalance > 0 && failsafe < 360) {
@@ -1138,10 +1148,8 @@
             }
         };
 
-        // Exportar a window para que los eventos onclick del HTML funcionen.
         window.App = App;
 
-        // Iniciar la app
         window.addEventListener('DOMContentLoaded', () => {
             App.init();
         });
