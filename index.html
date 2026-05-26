@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#3b82f6">
     <title>DeudaCero</title>
     
-    <!-- Ícono Web y Apple Touch Icon generados en SVG (Sin dependencias externas) -->
+    <!-- Ícono Web y Apple Touch Icon generados en SVG -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
     
@@ -309,6 +309,15 @@
         <!-- VISTA: AJUSTES -->
         <section id="view-settings" class="view space-y-6">
             <h2 class="text-2xl font-bold">Ajustes y Datos</h2>
+
+            <!-- ESCUDO ANTI-PÉRDIDA: Caja Fuerte de Emergencia -->
+            <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4 border border-yellow-200 dark:border-yellow-900/30 shadow-lg shadow-yellow-500/10">
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-life-ring text-yellow-500 mr-2"></i> Salvavidas Anti-Pérdida</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Tu dispositivo crea copias de seguridad automáticas y blindadas cada vez que guardas algo, al margen de la nube.</p>
+                <button onclick="App.restoreVault()" class="w-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
+                    <i class="fa-solid fa-clock-rotate-left mr-2"></i> Restaurar Último Respaldo Local
+                </button>
+            </div>
             
             <div class="glass p-5 rounded-3xl dark:bg-darkCard border border-slate-200 dark:border-slate-800">
                 <h3 class="font-semibold mb-2"><i class="fa-solid fa-user-shield text-slate-500 mr-2"></i> Sesión</h3>
@@ -327,7 +336,7 @@
             </div>
 
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
-                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-database text-green-500 mr-2"></i> Copia Local</h3>
+                <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-database text-green-500 mr-2"></i> Copia Local Externa</h3>
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="App.exportData()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm">
                         Exportar JSON
@@ -527,7 +536,8 @@
             state: {
                 debts: [],
                 history: [],
-                theme: 'light'
+                theme: 'light',
+                lastModified: Date.now()
             },
             chartInstance: null,
             dbRef: null,
@@ -542,13 +552,10 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.isConnected = true;
-                        // Recuperar el usuario con el que se hizo login para apuntar a la carpeta correcta
-                        const savedUser = localStorage.getItem('deudacero_username') || sessionStorage.getItem('deudacero_username');
-                        if (savedUser) {
-                            this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', savedUser);
-                            if(sessionStorage.getItem('deudacero_session') === 'true') {
-                                this.loadDataFirebase();
-                            }
+                        // FORZAR SIEMPRE LA RUTA DE LUISMAR17
+                        this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', 'Luismar17');
+                        if(sessionStorage.getItem('deudacero_session') === 'true') {
+                            this.loadDataFirebase();
                         }
                     }
                 });
@@ -560,8 +567,7 @@
 
                 if (remembered || sessionActive) {
                     sessionStorage.setItem('deudacero_session', 'true');
-                    const savedUser = localStorage.getItem('deudacero_username') || sessionStorage.getItem('deudacero_username') || 'Luismar17';
-                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', savedUser);
+                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', 'Luismar17');
                     this.completeInit();
                 } else {
                     const loginScreen = document.getElementById('login-screen');
@@ -578,16 +584,12 @@
 
                 if (user === 'Luismar17' && pass === 'Lm17@5**') {
                     sessionStorage.setItem('deudacero_session', 'true');
-                    sessionStorage.setItem('deudacero_username', user);
                     
                     if (remember) {
                         localStorage.setItem('deudacero_remembered', 'true');
-                        localStorage.setItem('deudacero_username', user);
                     }
                     
-                    // Asegurar la ruta correcta de Firebase bajo el entorno estricto
-                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', user);
-                    
+                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', 'Luismar17');
                     this.showToast('Bienvenido ' + user);
                     this.completeInit();
                 } else {
@@ -597,9 +599,7 @@
 
             logout() {
                 localStorage.removeItem('deudacero_remembered');
-                localStorage.removeItem('deudacero_username');
                 sessionStorage.removeItem('deudacero_session');
-                sessionStorage.removeItem('deudacero_username');
                 location.reload(); 
             },
 
@@ -680,25 +680,73 @@
             },
 
             async saveData() {
+                this.state.lastModified = Date.now(); // Actualizar marca de tiempo
                 this.renderAll();
-                try { localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state)); } catch (e) { }
+
+                try { 
+                    // 1. Respaldo Normal
+                    localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state)); 
+                    
+                    // 2. CAJA FUERTE (VAULT): Solo guarda en la bóveda si hay datos reales, NUNCA si está vacío.
+                    if (this.state.debts && this.state.debts.length > 0) {
+                        localStorage.setItem('deudacero_vault_backup', JSON.stringify(this.state)); 
+                    }
+                } catch (e) { console.error("Error guardando local", e); }
+                
                 if (!this.dbRef) return;
                 try { await setDoc(this.dbRef, this.state); } catch (error) { console.error("Firebase denegó el guardado.", error); }
             },
             
+            // Función para el botón del salvavidas
+            restoreVault() {
+                if(confirm('¿Estás seguro de restaurar el último respaldo de emergencia? Esto sobrescribirá la pantalla y la nube con tu última copia local segura.')) {
+                    const vaultData = localStorage.getItem('deudacero_vault_backup');
+                    if(vaultData) {
+                        this.state = JSON.parse(vaultData);
+                        this.saveData(); // Empuja los datos recuperados a la nube
+                        this.showToast('¡Datos recuperados con éxito de la caja fuerte!');
+                    } else {
+                        this.showToast('No se encontró ninguna copia de emergencia en este dispositivo', 'error');
+                    }
+                }
+            },
+
             loadDataFirebase() {
                 if (!this.dbRef) return;
+                
                 onSnapshot(this.dbRef, (docSnap) => {
                     if (docSnap.exists()) {
-                        this.state = docSnap.data();
+                        const cloudData = docSnap.data();
+
+                        // 3. ESCUDO ANTI-PÉRDIDAS (Evitar sobreescritura vacía)
+                        const localDebtsCount = this.state.debts ? this.state.debts.length : 0;
+                        const cloudDebtsCount = (cloudData.debts && Array.isArray(cloudData.debts)) ? cloudData.debts.length : 0;
+
+                        if (localDebtsCount > 0 && cloudDebtsCount === 0) {
+                            console.warn("¡Peligro! La nube mandó un archivo vacío, pero tienes datos locales. Bloqueando descarga y protegiendo datos...");
+                            this.saveData(); // En vez de borrar, sube los locales a la nube
+                            return; // Detiene la ejecución aquí
+                        }
+
+                        // Si pasa el escudo, cargamos los datos de la nube
+                        this.state = cloudData;
                         if(!this.state.debts) this.state.debts = [];
                         if(!this.state.history) this.state.history = [];
                         if(!this.state.theme) this.state.theme = 'light';
+                        if(!this.state.lastModified) this.state.lastModified = Date.now();
                         
+                        // Guarda el backup normal
                         localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
+                        
+                        // Guarda en la caja fuerte local si llegó información válida
+                        if (this.state.debts.length > 0) {
+                            localStorage.setItem('deudacero_vault_backup', JSON.stringify(this.state)); 
+                        }
+
                         this.applyTheme();
                         this.renderAll();
                     } else {
+                        // Nube no tiene historial, subimos lo que tenemos localmente
                         this.saveData();
                     }
                 }, (error) => { console.error("Listener de Firebase desconectado.", error); });
@@ -728,7 +776,6 @@
                 if(this.chartInstance) this.renderChart();
             },
 
-            // GESTIÓN DE MODALES CORRECTA (Corrige el bug de borrar datos al editar)
             openNewDebtModal() {
                 this.resetDebtForm();
                 this.UI.openModal('modal-debt');
@@ -958,7 +1005,6 @@
                 const id = document.getElementById('debt-id').value;
                 const name = document.getElementById('debt-name').value;
                 
-                // Usamos la función parseNumberString para quitar los puntos de miles antes de guardar
                 const balance = this.parseNumberString(document.getElementById('debt-balance').value);
                 const minPayment = this.parseNumberString(document.getElementById('debt-min-payment').value);
                 
@@ -994,7 +1040,6 @@
                 document.getElementById('debt-id').value = debt.id;
                 document.getElementById('debt-name').value = debt.name;
                 
-                // Llenar datos con el formato COP de miles visualmente
                 document.getElementById('debt-balance').value = new Intl.NumberFormat('es-CO').format(debt.balance);
                 document.getElementById('debt-min-payment').value = new Intl.NumberFormat('es-CO').format(debt.minPayment);
                 
@@ -1004,7 +1049,6 @@
                 document.getElementById('interest-container').classList.toggle('hidden', !debt.hasInterest);
                 document.getElementById('modal-debt-title').textContent = 'Editar Deuda';
                 
-                // ¡Abre el modal SIN limpiarlo primero!
                 this.UI.openModal('modal-debt');
             },
 
@@ -1232,7 +1276,9 @@
             wipeDataExecute() {
                 const confirmTxt = document.getElementById('wipe-confirm').value;
                 if (confirmTxt === 'BORRAR') {
-                    this.state = { debts: [], history: [], theme: this.state.theme };
+                    // Borramos la caja fuerte primero para que no la restaure accidentalmente
+                    localStorage.removeItem('deudacero_vault_backup');
+                    this.state = { debts: [], history: [], theme: this.state.theme, lastModified: Date.now() };
                     this.saveData(); 
                     this.UI.closeModal('modal-wipe');
                     document.getElementById('wipe-confirm').value = '';
