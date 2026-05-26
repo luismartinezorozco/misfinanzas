@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#3b82f6">
     <title>DeudaCero</title>
     
-    <!-- Ícono Web y Apple Touch Icon generados en SVG -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
+    <!-- Ícono Web y Apple Touch Icon usando CDN externo para garantizar compatibilidad total con iOS -->
+    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=DC&background=3b82f6&color=fff&size=32&rounded=true">
+    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=DC&background=3b82f6&color=fff&size=180">
     
     <!-- Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -468,14 +468,14 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 mb-1">Fecha de corte</label>
-                                <input type="date" id="debt-cutoff-date" class="input-premium text-xs">
+                                <input type="date" id="debt-cutoff-date" class="input-premium">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 mb-1">Último pago</label>
-                                <input type="date" id="debt-last-payment" class="input-premium text-xs">
+                                <input type="date" id="debt-last-payment" class="input-premium">
                             </div>
                         </div>
 
@@ -516,9 +516,20 @@
                         </select>
                     </div>
                     
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Monto a Pagar ($) *</label>
-                        <input type="tel" id="pay-amount" required class="input-premium text-lg font-bold text-center" placeholder="0" oninput="App.formatInputNumber(event)">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Base ($) *</label>
+                            <input type="tel" id="pay-amount" required class="input-premium font-bold text-center" placeholder="0" oninput="App.formatInputNumber(event); App.estimatePayment()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Abono Extra ($)</label>
+                            <input type="tel" id="pay-extra" class="input-premium font-bold text-center text-green-600 dark:text-green-400" placeholder="0" oninput="App.formatInputNumber(event); App.estimatePayment()">
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-2 mb-2">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Total a Pagar</p>
+                        <p class="text-3xl font-bold text-primary" id="pay-total-display">$0</p>
                     </div>
 
                     <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 hidden" id="pay-estimate-box">
@@ -600,8 +611,14 @@
             async init() {
                 this.updateDate();
                 
-                document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
-                document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
+                document.getElementById('pay-debt-id').addEventListener('change', (e) => {
+                    const debt = this.state.debts.find(d => d.id === e.target.value);
+                    if (debt) {
+                        document.getElementById('pay-amount').value = new Intl.NumberFormat('es-CO').format(debt.minPayment);
+                        document.getElementById('pay-extra').value = '';
+                        this.estimatePayment();
+                    }
+                });
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
@@ -1146,11 +1163,19 @@
                 if (active.length === 0) {
                     select.innerHTML = '<option value="">No hay deudas activas</option>';
                     document.getElementById('pay-amount').disabled = true;
+                    document.getElementById('pay-extra').disabled = true;
                     return;
                 }
                 
                 document.getElementById('pay-amount').disabled = false;
+                document.getElementById('pay-extra').disabled = false;
                 select.innerHTML = active.map(d => `<option value="${d.id}">${d.name} (${this.formatCOP(d.balance)})</option>`).join('');
+                
+                // Autocompletar la primera cuota al abrir el modal
+                const firstDebt = active[0];
+                document.getElementById('pay-amount').value = new Intl.NumberFormat('es-CO').format(firstDebt.minPayment);
+                document.getElementById('pay-extra').value = '';
+
                 this.estimatePayment();
             },
 
@@ -1208,18 +1233,25 @@
             estimatePayment() {
                 const select = document.getElementById('pay-debt-id');
                 const amountInput = document.getElementById('pay-amount');
+                const extraInput = document.getElementById('pay-extra');
                 const box = document.getElementById('pay-estimate-box');
+                const totalDisplay = document.getElementById('pay-total-display');
                 
-                if (!select.value || !amountInput.value) {
+                if (!select.value) {
                     box.classList.add('hidden');
+                    totalDisplay.textContent = '$0';
                     return;
                 }
 
                 const debt = this.state.debts.find(d => d.id === select.value);
-                const amount = this.parseNumberString(amountInput.value);
+                const baseAmount = this.parseNumberString(amountInput.value);
+                const extraAmount = this.parseNumberString(extraInput.value);
+                const totalAmount = baseAmount + extraAmount;
 
-                if (debt && amount > 0) {
-                    const bd = this.getPaymentBreakdown(debt, amount);
+                totalDisplay.textContent = this.formatCOP(totalAmount);
+
+                if (debt && totalAmount > 0) {
+                    const bd = this.getPaymentBreakdown(debt, totalAmount);
                     
                     document.getElementById('pay-est-interest').textContent = this.formatCOP(bd.paidInterest);
                     document.getElementById('pay-est-insurance').textContent = this.formatCOP(bd.paidInsurance);
@@ -1240,7 +1272,9 @@
             processPayment(e) {
                 e.preventDefault();
                 const id = document.getElementById('pay-debt-id').value;
-                const amount = this.parseNumberString(document.getElementById('pay-amount').value);
+                const baseAmount = this.parseNumberString(document.getElementById('pay-amount').value);
+                const extraAmount = this.parseNumberString(document.getElementById('pay-extra').value);
+                const amount = baseAmount + extraAmount;
                 
                 const debt = this.state.debts.find(d => d.id === id);
                 if (!debt) return;
