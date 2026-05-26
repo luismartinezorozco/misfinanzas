@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#3b82f6">
     <title>DeudaCero</title>
     
-    <!-- Ícono Web y Apple Touch Icon usando CDN externo para garantizar compatibilidad total con iOS -->
-    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=DC&background=3b82f6&color=fff&size=32&rounded=true">
-    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=DC&background=3b82f6&color=fff&size=180">
+    <!-- Ícono Web y Apple Touch Icon (PNG estático 100% compatible con iOS) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://dummyimage.com/32x32/3b82f6/ffffff.png&text=DC">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://dummyimage.com/180x180/3b82f6/ffffff.png&text=DC">
     
     <!-- Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -115,6 +115,8 @@
         /* Clase global para Inputs consistentes y visibles en modo oscuro */
         .input-premium {
             width: 100%;
+            max-width: 100%;
+            box-sizing: border-box !important;
             background-color: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
@@ -132,6 +134,14 @@
             color: #f8fafc;
         }
         .dark .input-premium:focus { border-color: #3b82f6; }
+
+        /* Forzar inputs a no romper grids en iOS Safari */
+        input[type="date"].input-premium, 
+        input[type="number"].input-premium,
+        input[type="text"].input-premium,
+        input[type="tel"].input-premium {
+            min-width: 0;
+        }
     </style>
 </head>
 <body class="w-screen overflow-hidden flex flex-col text-slate-800 transition-colors duration-300 relative">
@@ -454,38 +464,38 @@
                     <!-- SECCIÓN FINANCIERA AVANZADA (Mantiene el diseño exacto) -->
                     <div id="interest-container" class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
                         <div class="grid grid-cols-3 gap-3">
-                            <div class="col-span-3 sm:col-span-1">
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Tasa E.A. (%) *</label>
+                            <div class="col-span-3 sm:col-span-1 min-w-0">
+                                <label class="block text-xs font-medium text-slate-500 mb-1 truncate">Tasa E.A. (%) *</label>
                                 <input type="number" id="debt-ea-rate" min="0" step="0.01" value="0" class="input-premium font-bold text-primary" oninput="App.calculateDerivedRates()">
                             </div>
-                            <div class="col-span-1 sm:col-span-1">
-                                <label class="block text-xs font-medium text-slate-500 mb-1">T. Mensual</label>
-                                <input type="text" id="debt-monthly-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed" readonly placeholder="0%">
+                            <div class="col-span-1 sm:col-span-1 min-w-0">
+                                <label class="block text-[10px] sm:text-xs font-medium text-slate-500 mb-1 truncate">T. Mensual</label>
+                                <input type="text" id="debt-monthly-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed px-1" readonly placeholder="0%">
                             </div>
-                            <div class="col-span-1 sm:col-span-1">
-                                <label class="block text-xs font-medium text-slate-500 mb-1">T. Diaria</label>
-                                <input type="text" id="debt-daily-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed" readonly placeholder="0%">
+                            <div class="col-span-1 sm:col-span-1 min-w-0">
+                                <label class="block text-[10px] sm:text-xs font-medium text-slate-500 mb-1 truncate">T. Diaria</label>
+                                <input type="text" id="debt-daily-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed px-1" readonly placeholder="0%">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Fecha de corte</label>
-                                <input type="date" id="debt-cutoff-date" class="input-premium">
+                        <div class="grid grid-cols-2 gap-3 overflow-hidden w-full">
+                            <div class="min-w-0 w-full">
+                                <label class="block text-[11px] sm:text-xs font-medium text-slate-500 mb-1 truncate">Fecha de corte</label>
+                                <input type="date" id="debt-cutoff-date" class="input-premium text-xs px-2 sm:px-4">
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Último pago</label>
-                                <input type="date" id="debt-last-payment" class="input-premium">
+                            <div class="min-w-0 w-full">
+                                <label class="block text-[11px] sm:text-xs font-medium text-slate-500 mb-1 truncate">Último pago</label>
+                                <input type="date" id="debt-last-payment" class="input-premium text-xs px-2 sm:px-4">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Seguro Mensual ($)</label>
+                            <div class="min-w-0">
+                                <label class="block text-[11px] sm:text-xs font-medium text-slate-500 mb-1 truncate">Seguro Mensual ($)</label>
                                 <input type="tel" id="debt-insurance" class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Int. Corrientes ($)</label>
+                            <div class="min-w-0">
+                                <label class="block text-[11px] sm:text-xs font-medium text-slate-500 mb-1 truncate">Int. Corrientes ($)</label>
                                 <input type="tel" id="debt-current-interest" class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
                             </div>
                         </div>
@@ -517,12 +527,12 @@
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Base ($) *</label>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-medium text-slate-500 mb-1 truncate">Cuota Base ($) *</label>
                             <input type="tel" id="pay-amount" required class="input-premium font-bold text-center" placeholder="0" oninput="App.formatInputNumber(event); App.estimatePayment()">
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Abono Extra ($)</label>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-medium text-slate-500 mb-1 truncate">Abono Extra ($)</label>
                             <input type="tel" id="pay-extra" class="input-premium font-bold text-center text-green-600 dark:text-green-400" placeholder="0" oninput="App.formatInputNumber(event); App.estimatePayment()">
                         </div>
                     </div>
