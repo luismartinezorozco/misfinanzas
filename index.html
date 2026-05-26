@@ -520,6 +520,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        const globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         const App = {
             state: {
@@ -540,9 +542,13 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.isConnected = true;
-                        this.dbRef = doc(db, 'DeudaCeroApp', 'MisDatosPersonales');
-                        if(sessionStorage.getItem('deudacero_session') === 'true') {
-                            this.loadDataFirebase();
+                        // Recuperar el usuario con el que se hizo login para apuntar a la carpeta correcta
+                        const savedUser = localStorage.getItem('deudacero_username') || sessionStorage.getItem('deudacero_username');
+                        if (savedUser) {
+                            this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', savedUser);
+                            if(sessionStorage.getItem('deudacero_session') === 'true') {
+                                this.loadDataFirebase();
+                            }
                         }
                     }
                 });
@@ -554,6 +560,8 @@
 
                 if (remembered || sessionActive) {
                     sessionStorage.setItem('deudacero_session', 'true');
+                    const savedUser = localStorage.getItem('deudacero_username') || sessionStorage.getItem('deudacero_username') || 'Luismar17';
+                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', savedUser);
                     this.completeInit();
                 } else {
                     const loginScreen = document.getElementById('login-screen');
@@ -570,7 +578,16 @@
 
                 if (user === 'Luismar17' && pass === 'Lm17@5**') {
                     sessionStorage.setItem('deudacero_session', 'true');
-                    if (remember) localStorage.setItem('deudacero_remembered', 'true');
+                    sessionStorage.setItem('deudacero_username', user);
+                    
+                    if (remember) {
+                        localStorage.setItem('deudacero_remembered', 'true');
+                        localStorage.setItem('deudacero_username', user);
+                    }
+                    
+                    // Asegurar la ruta correcta de Firebase bajo el entorno estricto
+                    this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', user);
+                    
                     this.showToast('Bienvenido ' + user);
                     this.completeInit();
                 } else {
@@ -580,7 +597,9 @@
 
             logout() {
                 localStorage.removeItem('deudacero_remembered');
+                localStorage.removeItem('deudacero_username');
                 sessionStorage.removeItem('deudacero_session');
+                sessionStorage.removeItem('deudacero_username');
                 location.reload(); 
             },
 
