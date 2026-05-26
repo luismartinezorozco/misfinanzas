@@ -127,7 +127,7 @@
         .input-premium:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
         
         .dark .input-premium {
-            background-color: #0f172a; /* Fondo muy oscuro, genera contraste de "hueco" */
+            background-color: #0f172a; 
             border-color: #334155;
             color: #f8fafc;
         }
@@ -406,7 +406,7 @@
 
     <!-- ================= MODALES ================= -->
 
-    <!-- Modal: Nueva/Editar Deuda -->
+    <!-- Modal: Nueva/Editar Deuda (SISTEMA BANCARIO AVANZADO) -->
     <div id="modal-debt" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
         <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] modal-slide-up sm:animate-none">
             <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
@@ -442,9 +442,52 @@
                                 <option value="no">No (0%)</option>
                             </select>
                         </div>
-                        <div id="interest-container">
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Tasa Mensual (%)</label>
-                            <input type="number" id="debt-interest-rate" min="0" step="0.01" value="0" class="input-premium">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Tipo de Cuota</label>
+                            <select id="debt-quota-type" class="input-premium">
+                                <option value="fixed">Fija</option>
+                                <option value="variable">Variable</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN FINANCIERA AVANZADA (Mantiene el diseño exacto) -->
+                    <div id="interest-container" class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-3 sm:col-span-1">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Tasa E.A. (%) *</label>
+                                <input type="number" id="debt-ea-rate" min="0" step="0.01" value="0" class="input-premium font-bold text-primary" oninput="App.calculateDerivedRates()">
+                            </div>
+                            <div class="col-span-1 sm:col-span-1">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">T. Mensual</label>
+                                <input type="text" id="debt-monthly-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed" readonly placeholder="0%">
+                            </div>
+                            <div class="col-span-1 sm:col-span-1">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">T. Diaria</label>
+                                <input type="text" id="debt-daily-rate" class="input-premium bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-xs text-center border-dashed" readonly placeholder="0%">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Fecha de corte</label>
+                                <input type="date" id="debt-cutoff-date" class="input-premium text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Último pago</label>
+                                <input type="date" id="debt-last-payment" class="input-premium text-xs">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Seguro Mensual ($)</label>
+                                <input type="tel" id="debt-insurance" class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Int. Corrientes ($)</label>
+                                <input type="tel" id="debt-current-interest" class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
+                            </div>
                         </div>
                     </div>
 
@@ -456,7 +499,7 @@
         </div>
     </div>
 
-    <!-- Modal: Registrar Pago -->
+    <!-- Modal: Registrar Pago (ACTUALIZADO EN CASCADA) -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-sm sm:p-4">
         <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col modal-slide-up sm:animate-none">
             <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
@@ -478,12 +521,23 @@
                         <input type="tel" id="pay-amount" required class="input-premium text-lg font-bold text-center" placeholder="0" oninput="App.formatInputNumber(event)">
                     </div>
 
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 hidden" id="pay-estimate-box">
-                        <p class="text-xs text-blue-800 dark:text-blue-300">Estimación (Aprox):</p>
-                        <div class="flex justify-between text-sm font-medium mt-1">
-                            <span>A Interés: <span id="pay-est-interest" class="text-red-500">$0</span></span>
-                            <span>A Capital: <span id="pay-est-capital" class="text-green-500">$0</span></span>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 hidden" id="pay-estimate-box">
+                        <p class="text-xs text-blue-800 dark:text-blue-300 font-semibold border-b border-blue-200/50 pb-1 mb-2">Distribución del Pago (Cascada):</p>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm font-medium">
+                                <span class="text-slate-600 dark:text-slate-300">1. A Intereses:</span>
+                                <span id="pay-est-interest" class="text-red-500">$0</span>
+                            </div>
+                            <div class="flex justify-between text-sm font-medium">
+                                <span class="text-slate-600 dark:text-slate-300">2. A Seguro:</span>
+                                <span id="pay-est-insurance" class="text-amber-500">$0</span>
+                            </div>
+                            <div class="flex justify-between text-sm font-bold pt-1 border-t border-blue-200/50 mt-1">
+                                <span class="text-slate-800 dark:text-slate-100">3. A Capital:</span>
+                                <span id="pay-est-capital" class="text-green-600 dark:text-green-400">$0</span>
+                            </div>
                         </div>
+                        <p class="text-[10px] text-blue-600/70 mt-2 text-center" id="pay-est-days">Cálculo basado en días exactos</p>
                     </div>
 
                     <div class="pt-2">
@@ -552,7 +606,6 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.isConnected = true;
-                        // FORZAR SIEMPRE LA RUTA DE LUISMAR17
                         this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', 'Luismar17');
                         if(sessionStorage.getItem('deudacero_session') === 'true') {
                             this.loadDataFirebase();
@@ -584,11 +637,7 @@
 
                 if (user === 'Luismar17' && pass === 'Lm17@5**') {
                     sessionStorage.setItem('deudacero_session', 'true');
-                    
-                    if (remember) {
-                        localStorage.setItem('deudacero_remembered', 'true');
-                    }
-                    
+                    if (remember) localStorage.setItem('deudacero_remembered', 'true');
                     this.dbRef = doc(db, 'artifacts', globalAppId, 'public', 'data', 'cuentas', 'Luismar17');
                     this.showToast('Bienvenido ' + user);
                     this.completeInit();
@@ -626,19 +675,14 @@
                 if(this.isConnected) this.loadDataFirebase();
             },
 
-            // Formateador de números (Agrega puntos para los miles en COP)
             formatInputNumber(event) {
                 let input = event.target;
-                let val = input.value.replace(/\D/g, ''); // Deja solo los números
-                if (val === '') {
-                    input.value = '';
-                    return;
-                }
+                let val = input.value.replace(/\D/g, ''); 
+                if (val === '') { input.value = ''; return; }
                 let parsed = parseInt(val, 10);
                 input.value = new Intl.NumberFormat('es-CO').format(parsed);
             },
 
-            // Convertir la cadena con puntos de vuelta a número puro para hacer matemáticas
             parseNumberString(str) {
                 if (!str) return 0;
                 return parseFloat(str.replace(/\D/g, '')) || 0;
@@ -647,12 +691,8 @@
             formatCOP(amount) {
                 return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
             },
-            generateId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            },
-            getToday() {
-                return new Date().toISOString().split('T')[0];
-            },
+            generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
+            getToday() { return new Date().toISOString().split('T')[0]; },
             updateDate() {
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-CO', options);
@@ -667,27 +707,16 @@
                 toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${msg}`;
                 container.appendChild(toast);
                 
-                requestAnimationFrame(() => {
-                    toast.style.transform = 'translateY(0)';
-                    toast.style.opacity = '1';
-                });
-
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(-20px)';
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
+                requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; });
+                setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 300); }, 3000);
             },
 
             async saveData() {
-                this.state.lastModified = Date.now(); // Actualizar marca de tiempo
+                this.state.lastModified = Date.now(); 
                 this.renderAll();
 
                 try { 
-                    // 1. Respaldo Normal
                     localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state)); 
-                    
-                    // 2. CAJA FUERTE (VAULT): Solo guarda en la bóveda si hay datos reales, NUNCA si está vacío.
                     if (this.state.debts && this.state.debts.length > 0) {
                         localStorage.setItem('deudacero_vault_backup', JSON.stringify(this.state)); 
                     }
@@ -697,16 +726,15 @@
                 try { await setDoc(this.dbRef, this.state); } catch (error) { console.error("Firebase denegó el guardado.", error); }
             },
             
-            // Función para el botón del salvavidas
             restoreVault() {
                 if(confirm('¿Estás seguro de restaurar el último respaldo de emergencia? Esto sobrescribirá la pantalla y la nube con tu última copia local segura.')) {
                     const vaultData = localStorage.getItem('deudacero_vault_backup');
                     if(vaultData) {
                         this.state = JSON.parse(vaultData);
-                        this.saveData(); // Empuja los datos recuperados a la nube
+                        this.saveData();
                         this.showToast('¡Datos recuperados con éxito de la caja fuerte!');
                     } else {
-                        this.showToast('No se encontró ninguna copia de emergencia en este dispositivo', 'error');
+                        this.showToast('No se encontró ninguna copia de emergencia', 'error');
                     }
                 }
             },
@@ -718,27 +746,22 @@
                     if (docSnap.exists()) {
                         const cloudData = docSnap.data();
 
-                        // 3. ESCUDO ANTI-PÉRDIDAS (Evitar sobreescritura vacía)
                         const localDebtsCount = this.state.debts ? this.state.debts.length : 0;
                         const cloudDebtsCount = (cloudData.debts && Array.isArray(cloudData.debts)) ? cloudData.debts.length : 0;
 
                         if (localDebtsCount > 0 && cloudDebtsCount === 0) {
-                            console.warn("¡Peligro! La nube mandó un archivo vacío, pero tienes datos locales. Bloqueando descarga y protegiendo datos...");
-                            this.saveData(); // En vez de borrar, sube los locales a la nube
-                            return; // Detiene la ejecución aquí
+                            console.warn("Bloqueando nube vacía para proteger locales");
+                            this.saveData(); 
+                            return; 
                         }
 
-                        // Si pasa el escudo, cargamos los datos de la nube
                         this.state = cloudData;
                         if(!this.state.debts) this.state.debts = [];
                         if(!this.state.history) this.state.history = [];
                         if(!this.state.theme) this.state.theme = 'light';
                         if(!this.state.lastModified) this.state.lastModified = Date.now();
                         
-                        // Guarda el backup normal
                         localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
-                        
-                        // Guarda en la caja fuerte local si llegó información válida
                         if (this.state.debts.length > 0) {
                             localStorage.setItem('deudacero_vault_backup', JSON.stringify(this.state)); 
                         }
@@ -746,7 +769,6 @@
                         this.applyTheme();
                         this.renderAll();
                     } else {
-                        // Nube no tiene historial, subimos lo que tenemos localmente
                         this.saveData();
                     }
                 }, (error) => { console.error("Listener de Firebase desconectado.", error); });
@@ -768,12 +790,25 @@
                 this.saveData();
             },
             applyTheme() {
-                if (this.state.theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
+                if (this.state.theme === 'dark') { document.documentElement.classList.add('dark'); } 
+                else { document.documentElement.classList.remove('dark'); }
                 if(this.chartInstance) this.renderChart();
+            },
+
+            // CÁLCULO FINANCIERO: EA a Nominales
+            calculateDerivedRates() {
+                const eaInput = document.getElementById('debt-ea-rate').value;
+                const ea = parseFloat(eaInput) || 0;
+                if (ea > 0) {
+                    const eaDecimal = ea / 100;
+                    const monthly = (Math.pow(1 + eaDecimal, 1/12) - 1) * 100;
+                    const daily = (Math.pow(1 + eaDecimal, 1/365) - 1) * 100;
+                    document.getElementById('debt-monthly-rate').value = monthly.toFixed(4) + '%';
+                    document.getElementById('debt-daily-rate').value = daily.toFixed(4) + '%';
+                } else {
+                    document.getElementById('debt-monthly-rate').value = '0%';
+                    document.getElementById('debt-daily-rate').value = '0%';
+                }
             },
 
             openNewDebtModal() {
@@ -860,7 +895,15 @@
 
                 list.innerHTML = activeDebts.map((d, index) => {
                     const isTarget = index === 0;
-                    const interestBadge = d.hasInterest ? `<span class="bg-red-100 dark:bg-red-900/30 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">${d.interestRate}% mes</span>` : `<span class="bg-green-100 dark:bg-green-900/30 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">0% Int.</span>`;
+                    let rateTxt = '0% Int.';
+                    if (d.hasInterest) {
+                        if (d.eaRate !== undefined) rateTxt = `${d.eaRate}% E.A.`;
+                        else rateTxt = `${d.interestRate}%/mes (Antiguo)`;
+                    }
+                    
+                    const interestBadge = d.hasInterest 
+                        ? `<span class="bg-red-100 dark:bg-red-900/30 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">${rateTxt}</span>` 
+                        : `<span class="bg-green-100 dark:bg-green-900/30 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">0% Int.</span>`;
                     
                     return `
                     <div class="glass p-4 rounded-2xl dark:bg-darkCard relative overflow-hidden ${isTarget ? 'border-2 border-primary shadow-lg shadow-primary/10' : 'border border-slate-200 dark:border-slate-800'}">
@@ -998,6 +1041,8 @@
                 document.getElementById('debt-id').value = '';
                 document.getElementById('modal-debt-title').textContent = 'Nueva Deuda';
                 document.getElementById('interest-container').classList.remove('hidden');
+                document.getElementById('debt-ea-rate').value = '0';
+                this.calculateDerivedRates();
             },
 
             saveDebt(e) {
@@ -1009,17 +1054,36 @@
                 const minPayment = this.parseNumberString(document.getElementById('debt-min-payment').value);
                 
                 const hasInterest = document.getElementById('debt-has-interest').value === 'yes';
-                const interestRate = hasInterest ? parseFloat(document.getElementById('debt-interest-rate').value || 0) : 0;
+                const quotaType = document.getElementById('debt-quota-type').value;
+                
+                const eaRate = hasInterest ? parseFloat(document.getElementById('debt-ea-rate').value || 0) : 0;
+                const cutoffDate = document.getElementById('debt-cutoff-date').value;
+                const lastPaymentDate = document.getElementById('debt-last-payment').value;
+                
+                const insurance = this.parseNumberString(document.getElementById('debt-insurance').value);
+                const currentInterest = this.parseNumberString(document.getElementById('debt-current-interest').value);
 
                 const debtObj = {
                     id: id || this.generateId(),
-                    name, balance, initialBalance: balance, minPayment, hasInterest, interestRate, dateCreated: this.getToday()
+                    name, 
+                    balance, 
+                    initialBalance: balance, 
+                    minPayment, 
+                    hasInterest, 
+                    eaRate,
+                    quotaType,
+                    cutoffDate,
+                    lastPaymentDate,
+                    insurance,
+                    currentInterest,
+                    dateCreated: this.getToday()
                 };
 
                 if (id) {
                     const idx = this.state.debts.findIndex(d => d.id === id);
                     if (idx > -1) {
                         debtObj.initialBalance = this.state.debts[idx].initialBalance;
+                        // Si tenía interestRate viejo, lo pisamos al nuevo formato EA
                         this.state.debts[idx] = debtObj;
                         this.addHistoryRecord('edit', `Editaste deuda: ${name}`, 0);
                     }
@@ -1044,11 +1108,25 @@
                 document.getElementById('debt-min-payment').value = new Intl.NumberFormat('es-CO').format(debt.minPayment);
                 
                 document.getElementById('debt-has-interest').value = debt.hasInterest ? 'yes' : 'no';
-                document.getElementById('debt-interest-rate').value = debt.interestRate;
+                document.getElementById('debt-quota-type').value = debt.quotaType || 'fixed';
+                
+                // Migración visual de deudas viejas: Si no tiene EA pero tiene interest mensual, lo pasamos a EA.
+                let displayEa = debt.eaRate || 0;
+                if (debt.hasInterest && debt.eaRate === undefined && debt.interestRate !== undefined) {
+                    displayEa = (Math.pow(1 + debt.interestRate/100, 12) - 1) * 100;
+                    displayEa = parseFloat(displayEa.toFixed(2));
+                }
+                
+                document.getElementById('debt-ea-rate').value = displayEa;
+                document.getElementById('debt-cutoff-date').value = debt.cutoffDate || '';
+                document.getElementById('debt-last-payment').value = debt.lastPaymentDate || '';
+                document.getElementById('debt-insurance').value = new Intl.NumberFormat('es-CO').format(debt.insurance || 0);
+                document.getElementById('debt-current-interest').value = new Intl.NumberFormat('es-CO').format(debt.currentInterest || 0);
                 
                 document.getElementById('interest-container').classList.toggle('hidden', !debt.hasInterest);
                 document.getElementById('modal-debt-title').textContent = 'Editar Deuda';
                 
+                this.calculateDerivedRates();
                 this.UI.openModal('modal-debt');
             },
 
@@ -1076,6 +1154,57 @@
                 this.estimatePayment();
             },
 
+            // CORE FINANCIERO: Cálculo de interese por días (Cascada)
+            getPaymentBreakdown(debt, paymentAmount) {
+                let estimatedInterest = 0;
+                let daysPassed = 0;
+                const accumulatedInterest = debt.currentInterest || 0;
+                const insurance = debt.insurance || 0;
+
+                if (debt.hasInterest) {
+                    if (debt.eaRate !== undefined) {
+                        // SISTEMA NUEVO: Cálculo por días
+                        if (debt.lastPaymentDate) {
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const lastDate = new Date(debt.lastPaymentDate + 'T00:00:00');
+                            const diffTime = Math.abs(today - lastDate);
+                            daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        } else {
+                            daysPassed = 30; // Si no hay fecha, asume 1 mes estándar
+                        }
+                        
+                        const eaDecimal = debt.eaRate / 100;
+                        const dailyRate = Math.pow(1 + eaDecimal, 1/365) - 1;
+                        estimatedInterest = (debt.balance * dailyRate * daysPassed) + accumulatedInterest;
+                    } else {
+                        // SISTEMA VIEJO: Mantener compatibilidad (Mensual lineal)
+                        estimatedInterest = (debt.balance * (debt.interestRate / 100)) + accumulatedInterest;
+                        daysPassed = 30;
+                    }
+                }
+
+                // Cascada de pagos (Waterfall)
+                let remaining = paymentAmount;
+                
+                const paidInterest = Math.min(remaining, estimatedInterest);
+                remaining -= paidInterest;
+
+                const paidInsurance = Math.min(remaining, insurance);
+                remaining -= paidInsurance;
+
+                const paidCapital = remaining > 0 ? remaining : 0;
+
+                return {
+                    estimatedInterest,
+                    insurance,
+                    paidInterest,
+                    paidInsurance,
+                    paidCapital,
+                    daysPassed
+                };
+            },
+
             estimatePayment() {
                 const select = document.getElementById('pay-debt-id');
                 const amountInput = document.getElementById('pay-amount');
@@ -1089,13 +1218,19 @@
                 const debt = this.state.debts.find(d => d.id === select.value);
                 const amount = this.parseNumberString(amountInput.value);
 
-                if (debt && debt.hasInterest && debt.interestRate > 0 && amount > 0) {
-                    const estimatedInterest = debt.balance * (debt.interestRate / 100);
-                    let capital = amount - estimatedInterest;
-                    if(capital < 0) capital = 0;
+                if (debt && amount > 0) {
+                    const bd = this.getPaymentBreakdown(debt, amount);
+                    
+                    document.getElementById('pay-est-interest').textContent = this.formatCOP(bd.paidInterest);
+                    document.getElementById('pay-est-insurance').textContent = this.formatCOP(bd.paidInsurance);
+                    document.getElementById('pay-est-capital').textContent = this.formatCOP(bd.paidCapital);
+                    
+                    if(debt.eaRate !== undefined) {
+                        document.getElementById('pay-est-days').textContent = `Cálculo por ${bd.daysPassed} días exactos transcurridos`;
+                    } else {
+                        document.getElementById('pay-est-days').textContent = `Cálculo de sistema anterior (Plano)`;
+                    }
 
-                    document.getElementById('pay-est-interest').textContent = this.formatCOP(estimatedInterest);
-                    document.getElementById('pay-est-capital').textContent = this.formatCOP(capital);
                     box.classList.remove('hidden');
                 } else {
                     box.classList.add('hidden');
@@ -1115,24 +1250,27 @@
                     return;
                 }
 
-                let actualCapitalPaid = amount;
+                const bd = this.getPaymentBreakdown(debt, amount);
 
-                if (debt.hasInterest && debt.interestRate > 0) {
-                    const interest = debt.balance * (debt.interestRate / 100);
-                    actualCapitalPaid = amount - interest;
-                    
-                    if (actualCapitalPaid < 0) {
-                        alert('Atención: El pago no cubre los intereses de este mes. Tu deuda crecerá.');
-                        debt.balance += Math.abs(actualCapitalPaid);
-                    } else {
-                        debt.balance -= actualCapitalPaid;
-                    }
-                } else {
-                    debt.balance -= amount;
+                // Checkeo anti-locuras
+                const maxExpected = debt.balance + bd.estimatedInterest + bd.insurance + 50000; // 50k buffer
+                if (amount > maxExpected) {
+                    this.showToast('El abono excede el saldo total adeudado', 'error');
+                    return;
                 }
 
+                // 1. Descuenta capital
+                debt.balance -= bd.paidCapital;
+                if (debt.balance < 0) debt.balance = 0;
+
+                // 2. Acumula intereses que no se alcanzaron a pagar (Comportamiento banco real)
+                const unpaidInterest = bd.estimatedInterest - bd.paidInterest;
+                debt.currentInterest = unpaidInterest > 0 ? unpaidInterest : 0;
+
+                // 3. Actualiza fecha de pago al día de hoy para reiniciar ciclo
+                debt.lastPaymentDate = this.getToday();
+
                 if (debt.balance <= 0) {
-                    debt.balance = 0;
                     this.showToast(`¡Felicidades! Pagaste totalmente ${debt.name}`);
                 } else {
                     this.showToast('Pago registrado correctamente');
@@ -1166,33 +1304,46 @@
                 const normalPayment = target.minPayment;
                 const boostedPayment = normalPayment + extra;
 
-                if (normalPayment <= 0 && target.hasInterest) {
-                    document.getElementById('sim-months-saved').textContent = "Revisa cuota mínima";
+                // Homologar la tasa mensual para el simulador rápido
+                let simulMonthlyRate = 0;
+                if(target.hasInterest) {
+                    if(target.eaRate !== undefined) {
+                        simulMonthlyRate = (Math.pow(1 + (target.eaRate/100), 1/12) - 1);
+                    } else {
+                        simulMonthlyRate = (target.interestRate / 100);
+                    }
+                }
+
+                const insurance = target.insurance || 0;
+
+                if ((normalPayment - insurance) <= 0 && target.hasInterest) {
+                    document.getElementById('sim-months-saved').textContent = "Revisa cuota mínima o seguros";
                     resBox.classList.remove('hidden');
                     return;
                 }
 
+                // Cálculo sin pagos extra
                 let normalMonths = 0;
-                let boostedMonths = 0;
-
-                let tempBalance = target.balance;
+                let tempBalance1 = target.balance;
                 let failsafe = 0;
-                while (tempBalance > 0 && failsafe < 360) {
-                    let interest = target.hasInterest ? tempBalance * (target.interestRate/100) : 0;
-                    let cap = normalPayment - interest;
+                while (tempBalance1 > 0 && failsafe < 360) {
+                    let interest = target.hasInterest ? (tempBalance1 * simulMonthlyRate) : 0;
+                    let cap = normalPayment - interest - insurance;
                     if(cap <= 0) { normalMonths = 999; break; }
-                    tempBalance -= cap;
+                    tempBalance1 -= cap;
                     normalMonths++;
                     failsafe++;
                 }
 
-                tempBalance = target.balance;
+                // Cálculo con pago extra
+                let boostedMonths = 0;
+                let tempBalance2 = target.balance;
                 failsafe = 0;
-                while (tempBalance > 0 && failsafe < 360) {
-                    let interest = target.hasInterest ? tempBalance * (target.interestRate/100) : 0;
-                    let cap = boostedPayment - interest;
+                while (tempBalance2 > 0 && failsafe < 360) {
+                    let interest = target.hasInterest ? (tempBalance2 * simulMonthlyRate) : 0;
+                    let cap = boostedPayment - interest - insurance;
                     if(cap <= 0) { boostedMonths = 999; break; }
-                    tempBalance -= cap;
+                    tempBalance2 -= cap;
                     boostedMonths++;
                     failsafe++;
                 }
@@ -1254,16 +1405,23 @@
                 doc.text(`Total Deuda Activa: ${this.formatCOP(total)}`, 14, 30);
                 doc.text(`Fecha de reporte: ${new Date().toLocaleDateString('es-CO')}`, 14, 38);
 
-                const activeDebts = this.state.debts.filter(d => d.balance > 0).map(d => [
-                    d.name,
-                    this.formatCOP(d.balance),
-                    this.formatCOP(d.minPayment),
-                    d.hasInterest ? `${d.interestRate}%` : '0%'
-                ]);
+                const activeDebts = this.state.debts.filter(d => d.balance > 0).map(d => {
+                    let rateStr = '0%';
+                    if(d.hasInterest) {
+                        if(d.eaRate !== undefined) rateStr = `${d.eaRate}% EA`;
+                        else rateStr = `${d.interestRate}%/m (Antiguo)`;
+                    }
+                    return [
+                        d.name,
+                        this.formatCOP(d.balance),
+                        this.formatCOP(d.minPayment),
+                        rateStr
+                    ];
+                });
 
                 doc.autoTable({
                     startY: 45,
-                    head: [['Deuda/Entidad', 'Saldo Actual', 'Cuota Min', 'Tasa (Mes)']],
+                    head: [['Deuda/Entidad', 'Saldo Actual', 'Cuota Min', 'Tasa']],
                     body: activeDebts,
                     theme: 'striped',
                     headStyles: { fillColor: [59, 130, 246] }
@@ -1276,7 +1434,6 @@
             wipeDataExecute() {
                 const confirmTxt = document.getElementById('wipe-confirm').value;
                 if (confirmTxt === 'BORRAR') {
-                    // Borramos la caja fuerte primero para que no la restaure accidentalmente
                     localStorage.removeItem('deudacero_vault_backup');
                     this.state = { debts: [], history: [], theme: this.state.theme, lastModified: Date.now() };
                     this.saveData(); 
@@ -1290,9 +1447,9 @@
 
             loadMockData() {
                 this.state.debts = [
-                    { id: '1', name: 'Tarjeta Visa', balance: 2500000, initialBalance: 3000000, minPayment: 150000, hasInterest: true, interestRate: 2.5, dateCreated: this.getToday() },
-                    { id: '2', name: 'Préstamo Mamá', balance: 800000, initialBalance: 1000000, minPayment: 50000, hasInterest: false, interestRate: 0, dateCreated: this.getToday() },
-                    { id: '3', name: 'Crédito Moto', balance: 4200000, initialBalance: 5000000, minPayment: 220000, hasInterest: true, interestRate: 1.8, dateCreated: this.getToday() }
+                    { id: '1', name: 'Tarjeta Visa', balance: 2500000, initialBalance: 3000000, minPayment: 150000, hasInterest: true, eaRate: 28.5, quotaType: 'variable', insurance: 5000, dateCreated: this.getToday(), lastPaymentDate: '2023-10-01' },
+                    { id: '2', name: 'Préstamo Mamá', balance: 800000, initialBalance: 1000000, minPayment: 50000, hasInterest: false, eaRate: 0, dateCreated: this.getToday() },
+                    { id: '3', name: 'Crédito Moto', balance: 4200000, initialBalance: 5000000, minPayment: 220000, hasInterest: true, eaRate: 21.4, quotaType: 'fixed', insurance: 12000, dateCreated: this.getToday(), lastPaymentDate: '2023-10-10' }
                 ];
                 this.state.history = [
                     { id: 'h1', date: this.getToday(), type: 'create', desc: 'Datos de prueba cargados', amount: 0 }
