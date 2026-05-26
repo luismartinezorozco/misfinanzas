@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DeudaCero">
     <meta name="theme-color" content="#3b82f6">
     <title>DeudaCero</title>
+    
+    <!-- Ícono Web y Apple Touch Icon generados en SVG (Sin dependencias externas) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%233b82f6'/><path d='M60 15 L25 55 L50 55 L40 85 L75 45 L50 45 Z' fill='white'/></svg>">
     
     <!-- Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -55,7 +60,7 @@
         }
 
         /* Prevenir zoom de interacciones */
-        button, a, input, select, textarea {
+        button, a, select, textarea {
             touch-action: manipulation;
         }
 
@@ -106,13 +111,33 @@
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
+        /* Clase global para Inputs consistentes y visibles en modo oscuro */
+        .input-premium {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            outline: none;
+            font-size: 0.875rem;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+        .input-premium:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        
+        .dark .input-premium {
+            background-color: #0f172a; /* Fondo muy oscuro, genera contraste de "hueco" */
+            border-color: #334155;
+            color: #f8fafc;
+        }
+        .dark .input-premium:focus { border-color: #3b82f6; }
     </style>
 </head>
 <body class="w-screen overflow-hidden flex flex-col text-slate-800 transition-colors duration-300 relative">
 
     <!-- ================= PANTALLA DE LOGIN ================= -->
     <div id="login-screen" class="fixed inset-0 z-[100] bg-slate-50 dark:bg-[#0f172a] hidden flex-col items-center justify-center p-6 transition-opacity duration-300">
-        <!-- Decoraciones de fondo -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
             <div class="absolute -top-[20%] -left-[10%] w-96 h-96 bg-primary/20 rounded-full blur-[80px]"></div>
             <div class="absolute -bottom-[20%] -right-[10%] w-96 h-96 bg-secondary/20 rounded-full blur-[80px]"></div>
@@ -130,14 +155,14 @@
                     <label class="block text-xs font-medium text-slate-500 mb-1">Usuario</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" id="login-user" required class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-primary text-sm text-slate-800 dark:text-white" placeholder="Tu usuario">
+                        <input type="text" id="login-user" required class="input-premium pl-10" placeholder="Tu usuario">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Contraseña</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" id="login-pass" required class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-primary text-sm text-slate-800 dark:text-white" placeholder="••••••••">
+                        <input type="password" id="login-pass" required class="input-premium pl-10" placeholder="••••••••">
                     </div>
                 </div>
                 <div class="flex items-center gap-2 pt-2 pb-2">
@@ -169,12 +194,11 @@
         </button>
     </header>
 
-    <!-- Contenedor Principal (Scrollable) -->
+    <!-- Contenedor Principal -->
     <main class="flex-1 overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top)+6rem)] pb-32 w-full max-w-5xl mx-auto" id="main-scroll">
         
-        <!-- ================= VISTA: DASHBOARD ================= -->
+        <!-- VISTA: DASHBOARD -->
         <section id="view-dashboard" class="view space-y-6">
-            <!-- Tarjeta Principal: Total Deuda -->
             <div class="glass p-6 rounded-3xl bg-gradient-to-br from-primary to-blue-700 text-white shadow-xl shadow-primary/20 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
                 <p class="text-blue-100 text-sm font-medium mb-1">Total Deuda Actual</p>
@@ -189,7 +213,6 @@
                 </div>
             </div>
 
-            <!-- Stats Rápidas -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="glass p-4 rounded-2xl flex items-center gap-4 dark:bg-darkCard">
                     <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center text-xl">
@@ -211,7 +234,6 @@
                 </div>
             </div>
 
-            <!-- Gráfico -->
             <div class="glass p-5 rounded-3xl dark:bg-darkCard hidden" id="chart-container">
                 <h3 class="font-semibold mb-4 text-slate-700 dark:text-slate-200">Evolución de tu Deuda</h3>
                 <div class="relative h-48 w-full">
@@ -219,25 +241,23 @@
                 </div>
             </div>
 
-            <!-- Botones de Acción Rápida -->
             <div class="flex gap-3">
-                <button onclick="App.UI.openModal('modal-debt')" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
+                <button onclick="App.openNewDebtModal()" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
                     <i class="fa-solid fa-plus mr-1"></i> Nueva Deuda
                 </button>
-                <button onclick="App.UI.openModal('modal-payment')" class="flex-1 bg-secondary text-white shadow-lg shadow-secondary/30 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
+                <button onclick="App.openPaymentModal()" class="flex-1 bg-secondary text-white shadow-lg shadow-secondary/30 py-3 rounded-2xl font-medium transition active:scale-95 text-sm">
                     <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Registrar Pago
                 </button>
             </div>
         </section>
 
-        <!-- ================= VISTA: MIS DEUDAS ================= -->
+        <!-- VISTA: MIS DEUDAS -->
         <section id="view-debts" class="view space-y-4">
             <div class="flex justify-between items-center mb-2">
                 <h2 class="text-2xl font-bold">Mis Deudas</h2>
-                <button onclick="App.UI.openModal('modal-debt')" class="text-primary font-medium text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full"><i class="fa-solid fa-plus"></i> Agregar</button>
+                <button onclick="App.openNewDebtModal()" class="text-primary font-medium text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full"><i class="fa-solid fa-plus"></i> Agregar</button>
             </div>
             
-            <!-- Lista de deudas inyectada por JS -->
             <div id="debts-list" class="space-y-4"></div>
             
             <div id="debts-empty" class="hidden text-center py-12 px-4 glass rounded-3xl dark:bg-darkCard">
@@ -246,11 +266,11 @@
                 </div>
                 <h3 class="font-bold text-lg mb-2">Sin deudas registradas</h3>
                 <p class="text-sm text-slate-500 mb-6">Empieza agregando tu primera deuda para crear tu plan de salida.</p>
-                <button onclick="App.UI.openModal('modal-debt')" class="bg-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/30 active:scale-95 transition">Agregar Deuda</button>
+                <button onclick="App.openNewDebtModal()" class="bg-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/30 active:scale-95 transition">Agregar Deuda</button>
             </div>
         </section>
 
-        <!-- ================= VISTA: SIMULADOR ================= -->
+        <!-- VISTA: SIMULADOR -->
         <section id="view-simulator" class="view space-y-6">
             <h2 class="text-2xl font-bold">Simulador Bola de Nieve</h2>
             <div class="glass p-5 rounded-3xl dark:bg-darkCard border border-slate-200 dark:border-slate-700">
@@ -259,7 +279,7 @@
                 <label class="block text-sm font-medium mb-2">Pago Extra Mensual Disponible</label>
                 <div class="relative mb-6">
                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                    <input type="number" id="sim-extra" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-3 pl-8 pr-4 outline-none focus:ring-2 focus:ring-primary" placeholder="Ej. 150000" oninput="App.simulate()">
+                    <input type="tel" id="sim-extra" class="input-premium pl-8" placeholder="Ej. 150.000" oninput="App.formatInputNumber(event); App.simulate()">
                 </div>
                 
                 <div id="sim-results" class="hidden space-y-4">
@@ -273,7 +293,7 @@
             </div>
         </section>
 
-        <!-- ================= VISTA: HISTORIAL ================= -->
+        <!-- VISTA: HISTORIAL -->
         <section id="view-history" class="view space-y-4">
             <h2 class="text-2xl font-bold mb-2">Historial</h2>
             <div class="glass p-1 rounded-2xl dark:bg-darkCard">
@@ -286,7 +306,7 @@
             </div>
         </section>
 
-        <!-- ================= VISTA: AJUSTES ================= -->
+        <!-- VISTA: AJUSTES -->
         <section id="view-settings" class="view space-y-6">
             <h2 class="text-2xl font-bold">Ajustes y Datos</h2>
             
@@ -300,7 +320,7 @@
 
             <div class="glass p-5 rounded-3xl dark:bg-darkCard space-y-4">
                 <h3 class="font-semibold border-b border-slate-100 dark:border-slate-700 pb-2"><i class="fa-solid fa-cloud text-blue-500 mr-2"></i> Estado de la Nube</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos cuentan con sincronización en tiempo real entre tus dispositivos (Firebase).</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tus datos cuentan con sincronización compartida automática en tus dispositivos.</p>
                 <button onclick="App.exportPDF()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 py-3 rounded-xl font-medium active:scale-95 transition text-sm flex items-center justify-center gap-2 mt-2">
                     <i class="fa-solid fa-file-pdf text-red-500"></i> Descargar Resumen en PDF
                 </button>
@@ -344,7 +364,7 @@
         
         <!-- Botón Flotante Central -->
         <div class="relative -top-6">
-            <button onclick="App.UI.openModal('modal-payment')" class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(59,130,246,0.6)] active:scale-90 transition-transform">
+            <button onclick="App.openPaymentModal()" class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(59,130,246,0.6)] active:scale-90 transition-transform">
                 <i class="fa-solid fa-dollar-sign text-2xl"></i>
             </button>
         </div>
@@ -391,31 +411,31 @@
                     
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Nombre / Entidad *</label>
-                        <input type="text" id="debt-name" required class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm" placeholder="Ej. Tarjeta Visa, Préstamo familiar...">
+                        <input type="text" id="debt-name" required class="input-premium" placeholder="Ej. Tarjeta Visa, Préstamo familiar...">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">Saldo Actual ($) *</label>
-                            <input type="number" id="debt-balance" required min="0" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                            <input type="tel" id="debt-balance" required class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Mínima ($) *</label>
-                            <input type="number" id="debt-min-payment" required min="0" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                            <input type="tel" id="debt-min-payment" required class="input-premium" placeholder="0" oninput="App.formatInputNumber(event)">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">¿Tiene Interés?</label>
-                            <select id="debt-has-interest" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm" onchange="document.getElementById('interest-container').classList.toggle('hidden', this.value === 'no')">
+                            <select id="debt-has-interest" class="input-premium" onchange="document.getElementById('interest-container').classList.toggle('hidden', this.value === 'no')">
                                 <option value="yes">Sí</option>
                                 <option value="no">No (0%)</option>
                             </select>
                         </div>
                         <div id="interest-container">
                             <label class="block text-xs font-medium text-slate-500 mb-1">Tasa Mensual (%)</label>
-                            <input type="number" id="debt-interest-rate" min="0" step="0.01" value="0" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                            <input type="number" id="debt-interest-rate" min="0" step="0.01" value="0" class="input-premium">
                         </div>
                     </div>
 
@@ -439,14 +459,14 @@
                 <form id="form-payment" onsubmit="App.processPayment(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Selecciona la Deuda *</label>
-                        <select id="pay-debt-id" required class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm">
+                        <select id="pay-debt-id" required class="input-premium">
                             <!-- Options inyectadas por JS -->
                         </select>
                     </div>
                     
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Monto a Pagar ($) *</label>
-                        <input type="number" id="pay-amount" required min="1" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-lg font-bold text-center outline-none focus:ring-2 focus:ring-primary">
+                        <input type="tel" id="pay-amount" required class="input-premium text-lg font-bold text-center" placeholder="0" oninput="App.formatInputNumber(event)">
                     </div>
 
                     <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 hidden" id="pay-estimate-box">
@@ -471,7 +491,7 @@
             <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <h3 class="text-xl font-bold mb-2">¿Borrar todo?</h3>
             <p class="text-sm text-slate-500 mb-4">Esta acción no se puede deshacer. Escribe <strong class="text-red-500">BORRAR</strong> para confirmar.</p>
-            <input type="text" id="wipe-confirm" class="w-full bg-slate-100 dark:bg-slate-800 text-center rounded-xl p-3 mb-4 uppercase font-bold tracking-widest outline-none focus:ring-2 focus:ring-red-500" placeholder="BORRAR">
+            <input type="text" id="wipe-confirm" class="input-premium text-center mb-4 uppercase font-bold tracking-widest" placeholder="BORRAR">
             <div class="flex gap-3">
                 <button type="button" onclick="App.UI.closeModal('modal-wipe')" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-medium active:scale-95">Cancelar</button>
                 <button type="button" onclick="App.wipeDataExecute()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 active:scale-95">Eliminar</button>
@@ -485,8 +505,7 @@
     <!-- Firebase & Lógica Principal -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Importar todas las funciones necesarias de autenticación real
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -501,8 +520,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        const globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         const App = {
             state: {
@@ -511,84 +528,63 @@
                 theme: 'light'
             },
             chartInstance: null,
-            userId: null,
             dbRef: null,
+            isConnected: false,
 
-            // 1. Inicialización escuchando el estado real de Firebase
             async init() {
                 this.updateDate();
                 
-                // Event Listeners UI
                 document.getElementById('pay-debt-id').addEventListener('change', () => this.estimatePayment());
                 document.getElementById('pay-amount').addEventListener('input', () => this.estimatePayment());
 
-                // Firebase maneja la sesión de manera segura. Si ya entraste antes, te deja pasar.
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        this.userId = user.uid; // ¡Este UID será idéntico en PC y celular!
-                        this.dbRef = doc(db, 'artifacts', globalAppId, 'users', user.uid, 'userState', 'main');
-                        this.completeInit(); // Oculta login y carga base de datos
-                    } else {
-                        // Si no hay sesión válida, muestra el Login
-                        const loginScreen = document.getElementById('login-screen');
-                        loginScreen.classList.remove('hidden');
-                        loginScreen.classList.add('flex');
+                        this.isConnected = true;
+                        this.dbRef = doc(db, 'DeudaCeroApp', 'MisDatosPersonales');
+                        if(sessionStorage.getItem('deudacero_session') === 'true') {
+                            this.loadDataFirebase();
+                        }
                     }
                 });
+
+                try { await signInAnonymously(auth); } catch (error) { console.error("Error nube:", error); }
+
+                const remembered = localStorage.getItem('deudacero_remembered') === 'true';
+                const sessionActive = sessionStorage.getItem('deudacero_session') === 'true';
+
+                if (remembered || sessionActive) {
+                    sessionStorage.setItem('deudacero_session', 'true');
+                    this.completeInit();
+                } else {
+                    const loginScreen = document.getElementById('login-screen');
+                    loginScreen.classList.remove('hidden');
+                    loginScreen.classList.add('flex');
+                }
             },
 
-            // Sistema de Login transformando el usuario en un identificador seguro
-            async login(e) {
+            login(e) {
                 e.preventDefault();
                 const user = document.getElementById('login-user').value;
                 const pass = document.getElementById('login-pass').value;
                 const remember = document.getElementById('login-remember').checked;
-                const btn = document.getElementById('btn-login');
 
-                // Transformamos tu nombre de usuario en un correo estructurado para Firebase
-                const email = `${user.toLowerCase().replace(/[^a-z0-9]/g, '')}@deudacero.app`;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                btn.disabled = true;
-
-                try {
-                    // Configurar si Firebase debe recordar la sesión o borrarla al cerrar el navegador
-                    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
-                    await setPersistence(auth, persistence);
-
-                    try {
-                        // Intentar iniciar sesión si ya te habías registrado antes
-                        await signInWithEmailAndPassword(auth, email, pass);
-                        this.showToast('Bienvenido de nuevo');
-                    } catch (err) {
-                        // Si el usuario no existe, lo creamos automáticamente (primera vez)
-                        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                            await createUserWithEmailAndPassword(auth, email, pass);
-                            this.showToast('Cuenta configurada con éxito');
-                        } else {
-                            throw err; // Otro error como contraseña equivocada
-                        }
-                    }
-                    // Si todo sale bien, onAuthStateChanged detectará el login y llamará a completeInit()
-                } catch (error) {
-                    console.error("Error en autenticación:", error);
+                if (user === 'Luismar17' && pass === 'Lm17@5**') {
+                    sessionStorage.setItem('deudacero_session', 'true');
+                    if (remember) localStorage.setItem('deudacero_remembered', 'true');
+                    this.showToast('Bienvenido ' + user);
+                    this.completeInit();
+                } else {
                     this.showToast('Credenciales incorrectas', 'error');
-                } finally {
-                    btn.innerHTML = '<span>Iniciar Sesión</span>';
-                    btn.disabled = false;
                 }
             },
 
-            async logout() {
-                try {
-                    await signOut(auth);
-                    location.reload(); // Recarga la página para mostrar el login
-                } catch (error) {
-                    console.error("Error cerrando sesión:", error);
-                }
+            logout() {
+                localStorage.removeItem('deudacero_remembered');
+                sessionStorage.removeItem('deudacero_session');
+                location.reload(); 
             },
 
-            async completeInit() {
-                // Ocultar pantalla de login
+            completeInit() {
                 const loginScreen = document.getElementById('login-screen');
                 loginScreen.style.opacity = '0';
                 setTimeout(() => {
@@ -596,12 +592,39 @@
                     loginScreen.classList.remove('flex');
                 }, 300);
 
-                // Conectar al Listener de Firestore (En tiempo real)
-                this.loadDataFirebase();
+                const localBackup = localStorage.getItem('deudacero_local_backup');
+                if (localBackup) {
+                    try {
+                        const parsed = JSON.parse(localBackup);
+                        if (parsed.debts) this.state = parsed;
+                        this.applyTheme();
+                    } catch (e) {}
+                }
+
+                this.renderAll();
                 this.nav('dashboard');
+
+                if(this.isConnected) this.loadDataFirebase();
             },
 
-            // 2. Utilidades
+            // Formateador de números (Agrega puntos para los miles en COP)
+            formatInputNumber(event) {
+                let input = event.target;
+                let val = input.value.replace(/\D/g, ''); // Deja solo los números
+                if (val === '') {
+                    input.value = '';
+                    return;
+                }
+                let parsed = parseInt(val, 10);
+                input.value = new Intl.NumberFormat('es-CO').format(parsed);
+            },
+
+            // Convertir la cadena con puntos de vuelta a número puro para hacer matemáticas
+            parseNumberString(str) {
+                if (!str) return 0;
+                return parseFloat(str.replace(/\D/g, '')) || 0;
+            },
+
             formatCOP(amount) {
                 return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
             },
@@ -623,7 +646,6 @@
                 
                 toast.className = `${bg} text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium transition-all duration-300 transform translate-y-[-20px] opacity-0`;
                 toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${msg}`;
-                
                 container.appendChild(toast);
                 
                 requestAnimationFrame(() => {
@@ -638,47 +660,31 @@
                 }, 3000);
             },
 
-            // 3. Sistema de Guardado a Prueba de Fallos
             async saveData() {
-                // RENDERIZADO OPTIMISTA: Actualizar la pantalla al instante sin esperar la red
                 this.renderAll();
-                
-                if (!this.userId || !this.dbRef) return;
-                
-                // SINCRONIZACIÓN EN LA NUBE: Guardar silenciosamente en Firebase.
-                try {
-                    await setDoc(this.dbRef, this.state);
-                } catch (error) {
-                    console.error("Firebase denegó el guardado. Revisa permisos o conexión.", error);
-                    this.showToast('No se pudo subir a la nube', 'error');
-                }
+                try { localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state)); } catch (e) { }
+                if (!this.dbRef) return;
+                try { await setDoc(this.dbRef, this.state); } catch (error) { console.error("Firebase denegó el guardado.", error); }
             },
             
             loadDataFirebase() {
-                if (!this.userId || !this.dbRef) return;
-                
-                // Escuchar cambios desde la nube (El puente entre PC y Celular)
+                if (!this.dbRef) return;
                 onSnapshot(this.dbRef, (docSnap) => {
                     if (docSnap.exists()) {
                         this.state = docSnap.data();
-                        
-                        // Prevención de errores de estructura base
                         if(!this.state.debts) this.state.debts = [];
                         if(!this.state.history) this.state.history = [];
                         if(!this.state.theme) this.state.theme = 'light';
                         
+                        localStorage.setItem('deudacero_local_backup', JSON.stringify(this.state));
                         this.applyTheme();
                         this.renderAll();
                     } else {
-                        // Si no existe, es la primera vez que entra con esta cuenta
                         this.saveData();
                     }
-                }, (error) => {
-                    console.error("Listener de Firebase desconectado.", error);
-                });
+                }, (error) => { console.error("Listener de Firebase desconectado.", error); });
             },
             
-            // 4. Navegación y UI
             nav(viewId) {
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 document.getElementById(`view-${viewId}`).classList.add('active');
@@ -686,7 +692,6 @@
                 document.querySelectorAll('.nav-btn').forEach(b => {
                     b.dataset.active = (b.dataset.target === viewId) ? 'true' : 'false';
                 });
-                
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 this.renderAll();
             },
@@ -703,6 +708,17 @@
                 }
                 if(this.chartInstance) this.renderChart();
             },
+
+            // GESTIÓN DE MODALES CORRECTA (Corrige el bug de borrar datos al editar)
+            openNewDebtModal() {
+                this.resetDebtForm();
+                this.UI.openModal('modal-debt');
+            },
+            openPaymentModal() {
+                this.populatePaymentSelect();
+                this.UI.openModal('modal-payment');
+            },
+
             UI: {
                 toggleMoreMenu() {
                     const menu = document.getElementById('more-menu');
@@ -719,8 +735,6 @@
                     const modal = document.getElementById(id);
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
-                    if (id === 'modal-debt') window.App.resetDebtForm();
-                    if (id === 'modal-payment') window.App.populatePaymentSelect();
                 },
                 closeModal(id) {
                     const modal = document.getElementById(id);
@@ -729,7 +743,6 @@
                 }
             },
 
-            // 5. Renderizado
             renderAll() {
                 this.renderDashboard();
                 this.renderDebts();
@@ -914,7 +927,6 @@
                 });
             },
 
-            // 6. Lógica de Negocio
             resetDebtForm() {
                 document.getElementById('form-debt').reset();
                 document.getElementById('debt-id').value = '';
@@ -926,20 +938,17 @@
                 e.preventDefault();
                 const id = document.getElementById('debt-id').value;
                 const name = document.getElementById('debt-name').value;
-                const balance = parseFloat(document.getElementById('debt-balance').value);
-                const minPayment = parseFloat(document.getElementById('debt-min-payment').value);
+                
+                // Usamos la función parseNumberString para quitar los puntos de miles antes de guardar
+                const balance = this.parseNumberString(document.getElementById('debt-balance').value);
+                const minPayment = this.parseNumberString(document.getElementById('debt-min-payment').value);
+                
                 const hasInterest = document.getElementById('debt-has-interest').value === 'yes';
                 const interestRate = hasInterest ? parseFloat(document.getElementById('debt-interest-rate').value || 0) : 0;
 
                 const debtObj = {
                     id: id || this.generateId(),
-                    name,
-                    balance,
-                    initialBalance: balance,
-                    minPayment,
-                    hasInterest,
-                    interestRate,
-                    dateCreated: this.getToday()
+                    name, balance, initialBalance: balance, minPayment, hasInterest, interestRate, dateCreated: this.getToday()
                 };
 
                 if (id) {
@@ -965,14 +974,18 @@
 
                 document.getElementById('debt-id').value = debt.id;
                 document.getElementById('debt-name').value = debt.name;
-                document.getElementById('debt-balance').value = debt.balance;
-                document.getElementById('debt-min-payment').value = debt.minPayment;
+                
+                // Llenar datos con el formato COP de miles visualmente
+                document.getElementById('debt-balance').value = new Intl.NumberFormat('es-CO').format(debt.balance);
+                document.getElementById('debt-min-payment').value = new Intl.NumberFormat('es-CO').format(debt.minPayment);
+                
                 document.getElementById('debt-has-interest').value = debt.hasInterest ? 'yes' : 'no';
                 document.getElementById('debt-interest-rate').value = debt.interestRate;
                 
                 document.getElementById('interest-container').classList.toggle('hidden', !debt.hasInterest);
                 document.getElementById('modal-debt-title').textContent = 'Editar Deuda';
                 
+                // ¡Abre el modal SIN limpiarlo primero!
                 this.UI.openModal('modal-debt');
             },
 
@@ -1011,9 +1024,9 @@
                 }
 
                 const debt = this.state.debts.find(d => d.id === select.value);
-                const amount = parseFloat(amountInput.value);
+                const amount = this.parseNumberString(amountInput.value);
 
-                if (debt && debt.hasInterest && debt.interestRate > 0) {
+                if (debt && debt.hasInterest && debt.interestRate > 0 && amount > 0) {
                     const estimatedInterest = debt.balance * (debt.interestRate / 100);
                     let capital = amount - estimatedInterest;
                     if(capital < 0) capital = 0;
@@ -1029,7 +1042,7 @@
             processPayment(e) {
                 e.preventDefault();
                 const id = document.getElementById('pay-debt-id').value;
-                const amount = parseFloat(document.getElementById('pay-amount').value);
+                const amount = this.parseNumberString(document.getElementById('pay-amount').value);
                 
                 const debt = this.state.debts.find(d => d.id === id);
                 if (!debt) return;
@@ -1069,19 +1082,12 @@
             },
 
             addHistoryRecord(type, desc, amount) {
-                this.state.history.push({
-                    id: this.generateId(),
-                    date: new Date().toISOString(),
-                    type,
-                    desc,
-                    amount
-                });
+                this.state.history.push({ id: this.generateId(), date: new Date().toISOString(), type, desc, amount });
             },
 
-            // 7. Simulador
             simulate() {
                 const extraInput = document.getElementById('sim-extra').value;
-                const extra = parseFloat(extraInput) || 0;
+                const extra = this.parseNumberString(extraInput);
                 const resBox = document.getElementById('sim-results');
                 
                 const active = this.state.debts.filter(d => d.balance > 0).sort((a, b) => a.balance - b.balance);
@@ -1138,7 +1144,6 @@
                 resBox.classList.remove('hidden');
             },
 
-            // 8. Utilidades de Datos
             exportData() {
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state));
                 const node = document.createElement('a');
